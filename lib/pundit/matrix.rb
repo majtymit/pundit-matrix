@@ -4,6 +4,8 @@ require_relative 'matrix/screen'
 require_relative 'matrix/screens'
 require_relative 'matrix/configuration'
 require_relative 'matrix/model'
+require_relative 'matrix/policy'
+require_relative 'matrix/policy/actions'
 
 module Pundit
   module Matrix

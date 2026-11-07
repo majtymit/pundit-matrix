@@ -133,8 +133,9 @@ The gem:
 - tables for roles, role permissions and role assignments, migration generators
 - the subject concern: roles of a subject, validations
 - resolving a subject's level for a screen
-- a module for Pundit policies: `index?` and `show?` need `read`, everything else needs `write`; custom actions
-  (run a job, unblock, import) are declared as write
+- Pundit integration: the base policy calls `extend Pundit::Matrix::Policy`, each policy declares its screen with
+  `screen :branches`; `index?` and `show?` need `read`, everything else needs `write`, and custom actions (run a job,
+  unblock, import) are written as `def import? = write?`
 - the roles and matrix UI as an engine
 - helpers for the host's subject screen: may A manage subject B, which roles may A assign
 
