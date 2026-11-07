@@ -106,11 +106,9 @@ matrix consistent with the positions is the job of whoever edits it, and only ad
 
 - The gem is written for any project. Nothing in it may assume a particular
   admin framework, subject model or existing data.
-- The install generator only creates files (initializer, migrations, routes). `rails destroy` with the same
-  generator removes them again, as long as the migrations have not run.
-- After the migrations have run, uninstalling is the project's own job, described in the README: a migration that
-  drops the gem's tables, and removing the gem from policies and the subject model. The gem never drops tables
-  with data by itself.
+- The install generator only creates files (initializer, migrations, routes). It never runs migrations and
+  never touches the database.
+- There is no uninstall. Removing the gem is the project's own job.
 
 ## Caching
 
