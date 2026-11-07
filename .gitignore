@@ -11,3 +11,5 @@
 .rspec_status
 
 /gemfiles/*.lock
+/spec/dummy/log/
+/spec/dummy/tmp/

@@ -137,6 +137,14 @@ GEM
     rspec-mocks (3.13.9)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
+    rspec-rails (8.1.0)
+      actionpack (>= 7.2)
+      activesupport (>= 7.2)
+      railties (>= 7.2)
+      rspec-core (>= 3.13.0, < 5.0.0)
+      rspec-expectations (>= 3.13.0, < 5.0.0)
+      rspec-mocks (>= 3.13.0, < 5.0.0)
+      rspec-support (>= 3.13.0, < 5.0.0)
     rspec-support (3.13.8)
     rubocop (1.92.2)
       json (>= 2.3)
@@ -154,6 +162,7 @@ GEM
       prism (~> 1.7)
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
+    sqlite3 (2.10.2-x86_64-linux-gnu)
     thor (1.5.0)
     timeout (0.6.1)
     tsort (0.2.0)
@@ -174,7 +183,9 @@ DEPENDENCIES
   pundit-matrix!
   rake (~> 13.0)
   rspec (~> 3.0)
+  rspec-rails
   rubocop (~> 1.21)
+  sqlite3
 
 CHECKSUMS
   actionpack (8.1.4) sha256=245493cc51be195a7645e6fc184880fa7e5b32ff1a08e053ee31f58c76e30ea4
@@ -228,11 +239,13 @@ CHECKSUMS
   rspec-core (3.13.7) sha256=c64ff16d9788119805cbc6a3f4b6d87cc22417c2d25976a3330de136896b5469
   rspec-expectations (3.13.6) sha256=bf538ca6d367ff5b0d85a87fdb5c0c6038f2cd1308a0eeba07476caa02d22f35
   rspec-mocks (3.13.9) sha256=ea5c7ff3054a6098ca6039aacef80aec69d5a8a3ef80be8fc88337359b672a30
+  rspec-rails (8.1.0) sha256=5e6c6a4e7f7d644b56e412d410824f6480c1e5a9c61b8448998236b4a4dbf3be
   rspec-support (3.13.8) sha256=e4160030309b7e3e9d9863dfe720a35dfcc577162f5402cd68fc8c5258a0ffd6
   rubocop (1.92.2) sha256=14fb31eed143a0dc6f78186c550c1715e81cd38f59d05d1165050e445c1f5382
   rubocop-ast (1.50.0) sha256=b9ca88300da0803ee222ad20cdb30494c0a784eed06fdc35d254b06d662788db
   ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
+  sqlite3 (2.10.2-x86_64-linux-gnu) sha256=ca92731ab464df9cae503fa1a439a549e2724f6953c8c05a7769b59366e38f15
   thor (1.5.0) sha256=e3a9e55fe857e44859ce104a84675ab6e8cd59c650a49106a05f55f136425e73
   timeout (0.6.1) sha256=78f57368a7e7bbadec56971f78a3f5ecbcfb59b7fcbb0a3ed6ddc08a5094accb
   tsort (0.2.0) sha256=9650a793f6859a43b6641671278f79cfead60ac714148aabe4e3f0060480089f

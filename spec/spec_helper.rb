@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
-require "pundit/matrix"
+ENV["RAILS_ENV"] = "test"
+
+require_relative "dummy/config/environment"
+require "rspec/rails"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
