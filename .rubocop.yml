@@ -46,3 +46,7 @@ Layout/MultilineMethodParameterLineBreaks:
 
 Style/FrozenStringLiteralComment:
   Enabled: false
+
+Naming/PredicatePrefix:
+  AllowedMethods:
+    - has_roles

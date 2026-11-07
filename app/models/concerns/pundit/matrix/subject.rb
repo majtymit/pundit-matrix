@@ -30,7 +30,7 @@ module Pundit
       end
 
       def active_superadmins
-        self.class.instance_exec(&Pundit::Matrix.config.active_superadmins)
+        self.class.active_superadmins
       end
 
       def other_active_superadmins

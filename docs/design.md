@@ -11,7 +11,7 @@ app the answers.
 ## Terms
 
 - **Subject** - whatever the host app authorizes, the object Pundit receives as `user`. Usually `User`, but the gem
-  must not assume it. The subject class is configured by the host app, the way ActiveAdmin accepts any model.
+  must not assume it. Any model becomes a subject by calling `has_roles`.
 - **Screen** - one area of the host app, for example branches, reservations or settings. One screen is one permission.
 - **Level** - how much access a role has to a screen: `none`, `read` or `write`. `write` includes `read`.
 - **Role** - a named set of screen levels. Roles can share part of their permissions.
@@ -39,8 +39,8 @@ app the answers.
 
 ### Superadmin
 
-- Not a role. The host app owns it: the subject answers `superadmin?`, and the configuration gives a scope of active
-  superadmins (by default every subject with a `superadmin` flag). The gem only reads it. It never shows up in role
+- Not a role. The host app owns it: the subject answers `superadmin?`, and `has_roles active_superadmins: -> { ... }`
+  gives a scope of active superadmins (by default every subject with a `superadmin` flag). The gem only reads it. It never shows up in role
   lists, the matrix or role selects.
 - Typically a superadmin also holds an admin role. Removing superadmin leaves an ordinary admin.
 - A superadmin can change anything and anyone, including itself and other superadmins. Superadmins are trusted

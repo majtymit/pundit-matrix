@@ -6,24 +6,8 @@ RSpec.describe Pundit::Matrix do
   describe '.configure' do
     include_context 'with fresh configuration'
 
-    it 'uses User as the subject class and no table prefix by default' do
-      expect(described_class.config).to have_attributes(subject_class: 'User', table_prefix: '')
-    end
-
-    it 'treats every subject with the superadmin flag as an active superadmin by default' do
-      User.create!(email: 'a@example.com', superadmin: true)
-      User.create!(email: 'b@example.com')
-
-      expect(User.instance_exec(&described_class.config.active_superadmins).pluck(:email)).to eq(['a@example.com'])
-    end
-
-    it 'changes the configuration' do
-      described_class.configure do |config|
-        config.subject_class = 'Account'
-        config.table_prefix = 'matrix_'
-      end
-
-      expect(described_class.config).to have_attributes(subject_class: 'Account', table_prefix: 'matrix_')
+    it 'uses no table prefix by default' do
+      expect(described_class.table_name_prefix).to eq('')
     end
 
     it "gives the gem's tables the configured prefix" do

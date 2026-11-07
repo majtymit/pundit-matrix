@@ -3,6 +3,7 @@ require_relative 'matrix/version'
 require_relative 'matrix/screen'
 require_relative 'matrix/screens'
 require_relative 'matrix/configuration'
+require_relative 'matrix/model'
 
 module Pundit
   module Matrix
