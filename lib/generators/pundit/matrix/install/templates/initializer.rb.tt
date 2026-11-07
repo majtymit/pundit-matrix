@@ -1,0 +1,8 @@
+Pundit::Matrix.configure do |config|
+<% if table_prefix.present? -%>
+  config.table_prefix = '<%= table_prefix %>'
+
+<% end -%>
+  config.screens do
+  end
+end

@@ -108,8 +108,9 @@ matrix consistent with the positions is the job of whoever edits it, and only ad
 
 - The gem is written for any project. Nothing in it may assume a particular
   admin framework, subject model or existing data.
-- The install generator only creates files (initializer, migrations, routes). It never runs migrations and
-  never touches the database.
+- `rails generate pundit:matrix:install User` creates the migration and the initializer, adds `has_roles` to the
+  model and mounts the engine at `/roles`. It reads the schema to check the model and the existing tables, but never
+  runs migrations or changes the database.
 - There is no uninstall. Removing the gem is the project's own job.
 
 ## Caching
