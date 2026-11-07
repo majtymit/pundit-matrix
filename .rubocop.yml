@@ -50,3 +50,6 @@ Style/FrozenStringLiteralComment:
 Naming/PredicatePrefix:
   AllowedMethods:
     - has_roles
+
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false

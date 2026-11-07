@@ -1,6 +1,8 @@
 module Pundit
   module Matrix
     class Access
+      delegate :superadmin?, to: :@subject
+
       def initialize(subject)
         @subject = subject
       end
@@ -21,17 +23,41 @@ module Pundit
       end
 
       def everything?
-        @subject.superadmin? || admin?
+        superadmin? || admin?
+      end
+
+      def admin?
+        rows.any? { |admin, *| admin }
+      end
+
+      def position
+        rows.filter_map { |_admin, position, *| position }.min
+      end
+
+      def manage?(other)
+        return true if superadmin?
+        return false if position.nil? || other.access.superadmin? || other.access.admin?
+
+        other.access.position.nil? || other.access.position > position
+      end
+
+      def assign?(role)
+        return true if superadmin?
+
+        !role.admin? && !position.nil? && role.position > position
+      end
+
+      def assignable_roles
+        return Role.ordered if superadmin?
+        return Role.none if position.nil?
+
+        Role.ordinary.where(Role.arel_table[:position].gt(position)).ordered
       end
 
       private
 
-      def admin?
-        rows.any? { |admin, _screen, _level| admin }
-      end
-
       def levels
-        @levels ||= rows.each_with_object({}) do |(_admin, screen, level), levels|
+        @levels ||= rows.each_with_object({}) do |(_admin, _position, screen, level), levels|
           next unless screen
 
           key = screen.to_sym
@@ -43,6 +69,7 @@ module Pundit
       def rows
         @rows ||= @subject.roles.left_joins(:permissions).pluck(
           Role.arel_table[:admin],
+          Role.arel_table[:position],
           Permission.arel_table[:screen],
           Permission.arel_table[:level]
         )

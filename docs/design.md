@@ -137,13 +137,15 @@ The gem:
   `screen :branches`; `index?` and `show?` need `read`, everything else needs `write`, and custom actions (run a job,
   unblock, import) are written as `def import? = write?`
 - the roles and matrix UI as an engine
-- helpers for the host's subject screen: may A manage subject B, which roles may A assign
+- helpers for the host's subject screen: `a.access.manage?(b)`, `a.access.assign?(role)` and
+  `a.access.assignable_roles`; whether A has write on the subjects screen is checked by the host's policy
 
 The host app:
 
 - the subject model with its superadmin and active state, and the subject screens, including the role field in
   the subject form (using the gem's helpers) and which index columns are safe
 - hiding menu items (through the policy)
-- record-level scoping, for example limiting data to the subject's branches in a policy `Scope`
+- policy scopes, for example limiting data to the subject's branches; `index?` already needs read, so the gem does
+  not touch scopes
 - applying the same "you cannot give what you do not have" rule to its own data, for example branches
 - audit of changes (paper_trail or anything else on the gem's models)
