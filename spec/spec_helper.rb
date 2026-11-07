@@ -10,6 +10,8 @@ end
 require_relative 'dummy/config/environment'
 require 'rspec/rails'
 
+Dir[File.join(__dir__, 'support/**/*.rb')].each { |file| require file }
+
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = '.rspec_status'

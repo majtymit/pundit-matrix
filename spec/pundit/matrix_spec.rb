@@ -6,11 +6,7 @@ RSpec.describe Pundit::Matrix do
   end
 
   describe '.configure' do
-    around do |example|
-      original = described_class.config.dup
-      example.run
-      described_class.instance_variable_set(:@config, original)
-    end
+    include_context 'with fresh configuration'
 
     it 'uses User as the subject class and no table prefix by default' do
       expect(described_class.config).to have_attributes(subject_class: 'User', table_prefix: '')
@@ -29,6 +25,16 @@ RSpec.describe Pundit::Matrix do
       described_class.configure { |config| config.table_prefix = 'matrix_' }
 
       expect(described_class.table_name_prefix).to eq('matrix_')
+    end
+
+    it 'declares screens' do
+      described_class.configure do |config|
+        config.screens do
+          screen :branches
+        end
+      end
+
+      expect(described_class.screens.map(&:key)).to eq([:branches])
     end
   end
 end
