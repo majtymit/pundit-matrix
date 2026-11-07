@@ -1,0 +1,19 @@
+<% if role.admin? %>
+  <p class="pundit-matrix-admin"><%= t('pundit_matrix.admin_role') %></p>
+<% else %>
+  <table class="pundit-matrix">
+    <% Pundit::Matrix.screens.group_by(&:group).each do |group, screens| %>
+      <tbody>
+        <% if group %>
+          <tr><th scope="rowgroup" colspan="2"><%= screens.first.group_label %></th></tr>
+        <% end %>
+        <% screens.each do |screen| %>
+          <tr>
+            <th scope="row"><%= screen.label %></th>
+            <td><%= t("pundit_matrix.levels.#{role.levels.fetch(screen.key, :none)}") %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    <% end %>
+  </table>
+<% end %>

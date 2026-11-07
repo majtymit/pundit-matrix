@@ -6,6 +6,14 @@ module Pundit
       def levels
         read_only? ? LEVELS - [:write] : LEVELS
       end
+
+      def label
+        I18n.t("pundit_matrix.screens.#{key}", default: key.to_s.humanize)
+      end
+
+      def group_label
+        I18n.t("pundit_matrix.groups.#{group}", default: group.to_s.humanize) if group
+      end
     end
   end
 end

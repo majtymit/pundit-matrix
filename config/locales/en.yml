@@ -17,3 +17,9 @@ en:
               not_offered: is not offered on this screen
             role:
               admin: has every permission already
+  pundit_matrix:
+    admin_role: An admin role has every permission, including screens added later.
+    levels:
+      none: No access
+      read: Read
+      write: Write

@@ -122,8 +122,9 @@ matrix consistent with the positions is the job of whoever edits it, and only ad
   (`current_user`, `current_admin_user`) works without configuration.
 - The host's role policy inherits from `Pundit::Matrix::RolePolicy`: only admins and superadmins manage roles, only a
   superadmin sets the admin flag.
-- The matrix is a widget: a partial the host puts into the role form, and a read-only variant for the role detail.
-  The form sends `levels: { branches: 'read' }`, the host permits `levels: {}` and the model saves it.
+- The matrix is a widget: `render 'pundit/matrix/levels_fields', role:` in the role form and
+  `render 'pundit/matrix/levels', role:` on the role detail. The form sends `levels: { branches: 'read' }`, the host
+  permits `levels: {}` and the model saves it.
 - Widgets are plain HTML without a layout or CSS framework, so they take the look of the admin they are in.
 
 ## Caching
@@ -140,7 +141,8 @@ matrix consistent with the positions is the job of whoever edits it, and only ad
 - A project translates into any language by defining the same keys in its own locale files.
 - A key missing in the current locale falls back to the gem's English, whether or not the host app has I18n
   fallbacks enabled.
-- Screen labels are the host app's keys, the gem only looks them up.
+- Screen and group labels are the host app's keys `pundit_matrix.screens.<key>` and `pundit_matrix.groups.<key>`;
+  without them the key itself is shown, humanized.
 
 ## What the gem does and what the host app does
 

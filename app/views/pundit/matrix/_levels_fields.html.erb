@@ -1,0 +1,36 @@
+<% scope = local_assigns.fetch(:scope, role.model_name.param_key) %>
+<% if role.admin? %>
+  <p class="pundit-matrix-admin"><%= t('pundit_matrix.admin_role') %></p>
+<% else %>
+  <table class="pundit-matrix">
+    <thead>
+      <tr>
+        <th></th>
+        <% Pundit::Matrix::LEVELS.each do |level| %>
+          <th scope="col"><%= t("pundit_matrix.levels.#{level}") %></th>
+        <% end %>
+      </tr>
+    </thead>
+    <% Pundit::Matrix.screens.group_by(&:group).each do |group, screens| %>
+      <tbody>
+        <% if group %>
+          <tr><th scope="rowgroup" colspan="<%= Pundit::Matrix::LEVELS.size + 1 %>"><%= screens.first.group_label %></th></tr>
+        <% end %>
+        <% screens.each do |screen| %>
+          <% current = role.levels.fetch(screen.key, :none) %>
+          <tr>
+            <th scope="row"><%= screen.label %></th>
+            <% Pundit::Matrix::LEVELS.each do |level| %>
+              <td>
+                <% if screen.levels.include?(level) %>
+                  <%= radio_button_tag "#{scope}[levels][#{screen.key}]", level, current == level,
+                                       'aria-label': "#{screen.label}: #{t("pundit_matrix.levels.#{level}")}" %>
+                <% end %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    <% end %>
+  </table>
+<% end %>
