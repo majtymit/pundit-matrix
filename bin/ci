@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+require 'active_support'
+require 'active_support/continuous_integration'
+
+ActiveSupport::ContinuousIntegration.run do
+  step 'Setup', 'bin/setup'
+
+  step 'Lint: RuboCop', 'bundle exec rubocop'
+  step 'Lint: Markdown', "npx --yes markdownlint-cli@0.50.0 '**/*.md'"
+
+  step 'Test: RSpec', 'COVERAGE=true bundle exec rspec'
+
+  step 'Security: Brakeman', 'bundle exec brakeman --force -A -q --no-progress --no-pager --exit-on-warn'
+  step 'Security: Bundler audit', 'bundle exec bundler-audit check --update --quiet'
+end

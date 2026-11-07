@@ -2,6 +2,11 @@
 
 ENV['RAILS_ENV'] = 'test'
 
+if ENV['COVERAGE']
+  require 'simplecov'
+  SimpleCov.start { add_filter '/spec/' }
+end
+
 require_relative 'dummy/config/environment'
 require 'rspec/rails'
 

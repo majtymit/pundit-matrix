@@ -10,8 +10,12 @@ gem 'rake', '~> 13.0'
 
 gem 'rspec', '~> 3.0'
 gem 'rspec-rails'
+gem 'simplecov', require: false
 gem 'sqlite3'
 
 gem 'rubocop', '~> 1.21'
 gem 'rubocop-rails', require: false
 gem 'rubocop-rspec', require: false
+
+gem 'brakeman', require: false
+gem 'bundler-audit', require: false
