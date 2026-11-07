@@ -76,7 +76,7 @@ app the answers.
 - When one of them already exists, the install generator stops and offers `--table-prefix`. The prefix goes to
   the gem's configuration and its models read it. Names of individual tables are not configurable.
 - The project names each role, sets its permissions and its position. Positions are unique, so it is always clear
-  which of two roles is higher.
+  which of two roles is higher. Position 1 is the highest.
 - A role that is held by any subject cannot be deleted.
 - Changing a role's name, position or permissions is done on the roles screen (admins only).
 - The host app includes the gem's concern in its subject model. That gives the subject its roles and the

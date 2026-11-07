@@ -1,0 +1,39 @@
+class CreatePunditMatrixTables < ActiveRecord::Migration[<%= migration_version %>]
+  def change
+    create_table :<%= table_prefix %>roles<%= ", id: :#{primary_key_type}" if primary_key_type %> do |t|
+      t.string :name, null: false
+      t.integer :position, null: false
+      t.boolean :admin, null: false, default: false
+      t.timestamps
+
+      t.index :name, unique: true
+      t.index :position, unique: true
+    end
+
+    create_table :<%= table_prefix %>permissions<%= ", id: :#{primary_key_type}" if primary_key_type %> do |t|
+      t.references :role,
+                   null: false,
+                   index: false,
+                   foreign_key: { to_table: :<%= table_prefix %>roles }<%= ",\n                   type: :#{primary_key_type}" if primary_key_type %>
+      t.string :screen, null: false
+      t.string :level, null: false
+      t.timestamps
+
+      t.index %i[role_id screen], unique: true
+      t.check_constraint "level IN ('read', 'write')", name: '<%= table_prefix %>permissions_level'
+    end
+
+    create_table :<%= table_prefix %>role_assignments<%= ", id: :#{primary_key_type}" if primary_key_type %> do |t|
+      t.references :role,
+                   null: false,
+                   foreign_key: { to_table: :<%= table_prefix %>roles }<%= ",\n                   type: :#{primary_key_type}" if primary_key_type %>
+      t.references :subject,
+                   null: false,
+                   polymorphic: true,
+                   index: false<%= ",\n                   type: :#{subject_id_type}" if subject_id_type %>
+      t.timestamps
+
+      t.index %i[subject_type subject_id role_id], unique: true
+    end
+  end
+end

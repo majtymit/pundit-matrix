@@ -1,0 +1,17 @@
+en:
+  activerecord:
+    errors:
+      models:
+        pundit/matrix/role:
+          attributes:
+            position:
+              above_ordinary_roles: must be above every ordinary role
+              below_admin_roles: must be below every admin role
+        pundit/matrix/permission:
+          attributes:
+            screen:
+              not_declared: is not declared
+            level:
+              not_offered: is not offered on this screen
+            role:
+              admin: has every permission already
