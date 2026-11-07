@@ -126,6 +126,8 @@ matrix consistent with the positions is the job of whoever edits it, and only ad
   `render 'pundit/matrix/levels', role:` on the role detail. The form sends `levels: { branches: 'read' }`, the host
   permits `levels: {}` and the model saves it.
 - Widgets are plain HTML without a layout or CSS framework, so they take the look of the admin they are in.
+- `render 'pundit/matrix/superadmin_warning', subjects: User` warns on the roles screen while nobody is an active
+  superadmin.
 
 ## Caching
 
@@ -137,7 +139,7 @@ matrix consistent with the positions is the job of whoever edits it, and only ad
 
 ## Translations
 
-- The gem ships only `en.yml`. Every text in the UI is an I18n key under the gem's namespace.
+- The gem ships only `en.yml`. Every text it shows, error messages included, is an I18n key under `pundit_matrix`.
 - A project translates into any language by defining the same keys in its own locale files.
 - A key missing in the current locale falls back to the gem's English, whether or not the host app has I18n
   fallbacks enabled.

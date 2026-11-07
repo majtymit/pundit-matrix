@@ -35,12 +35,16 @@ module Pundit
 
       def admin_role_above_ordinary_roles
         lowest_ordinary = other_roles.ordinary.minimum(:position)
-        errors.add(:position, :above_ordinary_roles) if position && lowest_ordinary && position > lowest_ordinary
+        return unless position && lowest_ordinary && position > lowest_ordinary
+
+        add_error(:position, :above_ordinary_roles)
       end
 
       def ordinary_role_below_admin_roles
         highest_admin = other_roles.admins.maximum(:position)
-        errors.add(:position, :below_admin_roles) if position && highest_admin && position < highest_admin
+        return unless position && highest_admin && position < highest_admin
+
+        add_error(:position, :below_admin_roles)
       end
 
       def other_roles

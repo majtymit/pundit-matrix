@@ -29,6 +29,14 @@ RSpec.describe Pundit::Matrix::Permission do
     expect(permission.errors[:screen]).to eq(['is not declared'])
   end
 
+  it "explains errors in the gem's English when the app has no translation" do
+    permission = role.permissions.new(screen: 'reservations', level: 'read')
+
+    I18n.with_locale(:sk) { permission.valid? }
+
+    expect(permission.errors[:screen]).to eq(['is not declared'])
+  end
+
   it 'refuses write on a read-only screen' do
     permission = role.permissions.new(screen: 'audit_versions', level: 'write')
 

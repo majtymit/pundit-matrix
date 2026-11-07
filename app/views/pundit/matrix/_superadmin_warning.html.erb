@@ -1,0 +1,3 @@
+<% unless subjects.active_superadmins.exists? %>
+  <p class="pundit-matrix-warning" role="alert"><%= Pundit::Matrix.t('no_superadmin') %></p>
+<% end %>

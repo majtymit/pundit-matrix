@@ -28,6 +28,10 @@ module Pundit
       def table_name_prefix
         config.table_prefix
       end
+
+      def t(key, **)
+        I18n.t("pundit_matrix.#{key}", **, default: I18n.t("pundit_matrix.#{key}", **, locale: :en))
+      end
     end
   end
 end

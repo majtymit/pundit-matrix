@@ -1,13 +1,13 @@
 <% scope = local_assigns.fetch(:scope, role.model_name.param_key) %>
 <% if role.admin? %>
-  <p class="pundit-matrix-admin"><%= t('pundit_matrix.admin_role') %></p>
+  <p class="pundit-matrix-admin"><%= Pundit::Matrix.t('admin_role') %></p>
 <% else %>
   <table class="pundit-matrix">
     <thead>
       <tr>
         <th></th>
         <% Pundit::Matrix::LEVELS.each do |level| %>
-          <th scope="col"><%= t("pundit_matrix.levels.#{level}") %></th>
+          <th scope="col"><%= Pundit::Matrix.t("levels.#{level}") %></th>
         <% end %>
       </tr>
     </thead>
@@ -24,7 +24,7 @@
               <td>
                 <% if screen.levels.include?(level) %>
                   <%= radio_button_tag "#{scope}[levels][#{screen.key}]", level, current == level,
-                                       'aria-label': "#{screen.label}: #{t("pundit_matrix.levels.#{level}")}" %>
+                                       'aria-label': "#{screen.label}: #{Pundit::Matrix.t("levels.#{level}")}" %>
                 <% end %>
               </td>
             <% end %>

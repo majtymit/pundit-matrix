@@ -27,14 +27,14 @@ module Pundit
         yield
         return unless was_active_superadmin && !active_superadmins.exists?(id) && !other_active_superadmins.exists?
 
-        errors.add(:base, :last_superadmin)
+        errors.add(:base, :last_superadmin, message: Pundit::Matrix.t('errors.last_superadmin'))
         raise ActiveRecord::RecordInvalid, self
       end
 
       def keep_an_active_superadmin_on_destroy
         return unless active_superadmins.exists?(id) && !other_active_superadmins.exists?
 
-        errors.add(:base, :last_superadmin)
+        errors.add(:base, :last_superadmin, message: Pundit::Matrix.t('errors.last_superadmin'))
         throw :abort
       end
 

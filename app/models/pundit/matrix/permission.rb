@@ -14,13 +14,13 @@ module Pundit
 
       def screen_declared_with_level
         return if screen.blank?
-        return errors.add(:screen, :not_declared) unless Pundit::Matrix.screens.key?(screen)
+        return add_error(:screen, :screen_not_declared) unless Pundit::Matrix.screens.key?(screen)
 
-        errors.add(:level, :not_offered) unless Pundit::Matrix.screens.fetch(screen).levels.include?(level&.to_sym)
+        add_error(:level, :level_not_offered) unless Pundit::Matrix.screens.fetch(screen).levels.include?(level&.to_sym)
       end
 
       def role_not_admin
-        errors.add(:role, :admin) if role&.admin?
+        add_error(:role, :admin_role) if role&.admin?
       end
     end
   end

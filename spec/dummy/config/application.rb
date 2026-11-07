@@ -10,5 +10,6 @@ module Dummy
     config.root = File.expand_path('..', __dir__)
     config.eager_load = false
     config.secret_key_base = 'dummy'
+    config.i18n.available_locales = %i[en sk]
   end
 end

@@ -26,4 +26,18 @@ RSpec.describe Pundit::Matrix do
       expect(described_class.screens.map(&:key)).to eq([:branches])
     end
   end
+
+  describe '.t' do
+    after { I18n.reload! }
+
+    it 'translates with the app translation of the current locale' do
+      I18n.backend.store_translations(:sk, pundit_matrix: { levels: { read: 'Čítanie' } })
+
+      I18n.with_locale(:sk) { expect(described_class.t('levels.read')).to eq('Čítanie') }
+    end
+
+    it "falls back to the gem's English when the current locale has no translation" do
+      I18n.with_locale(:sk) { expect(described_class.t('levels.read')).to eq('Read') }
+    end
+  end
 end

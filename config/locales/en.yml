@@ -1,25 +1,15 @@
 en:
-  activerecord:
-    errors:
-      messages:
-        last_superadmin: At least one active superadmin must remain
-      models:
-        pundit/matrix/role:
-          attributes:
-            position:
-              above_ordinary_roles: must be above every ordinary role
-              below_admin_roles: must be below every admin role
-        pundit/matrix/permission:
-          attributes:
-            screen:
-              not_declared: is not declared
-            level:
-              not_offered: is not offered on this screen
-            role:
-              admin: has every permission already
   pundit_matrix:
     admin_role: An admin role has every permission, including screens added later.
+    no_superadmin: Nobody is an active superadmin yet. Until someone is, nobody can manage admin roles.
     levels:
       none: No access
       read: Read
       write: Write
+    errors:
+      above_ordinary_roles: must be above every ordinary role
+      below_admin_roles: must be below every admin role
+      screen_not_declared: is not declared
+      level_not_offered: is not offered on this screen
+      admin_role: has every permission already
+      last_superadmin: At least one active superadmin must remain
