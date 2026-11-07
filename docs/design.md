@@ -114,8 +114,10 @@ matrix consistent with the positions is the job of whoever edits it, and only ad
 
 ## Caching
 
-- A subject's resolved permissions are loaded once per request, in one query, and reused for every check in that
-  request.
+- A subject's roles and levels are loaded once per request, in two small queries, and reused for every check in that
+  request. A superadmin needs none.
+- Checks against a list of subjects (`manage?`) read their roles from the association, so a list loaded with
+  `includes(:roles)` adds no queries.
 - Nothing is cached across requests. A change in the matrix or in a subject's roles applies on the next request.
 
 ## Translations

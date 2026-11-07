@@ -27,11 +27,11 @@ module Pundit
       end
 
       def admin?
-        rows.any? { |admin, *| admin }
+        roles.any?(&:admin?)
       end
 
       def position
-        rows.filter_map { |_admin, position, *| position }.min
+        roles.map(&:position).min
       end
 
       def manage?(other)
@@ -56,23 +56,20 @@ module Pundit
 
       private
 
-      def levels
-        @levels ||= rows.each_with_object({}) do |(_admin, _position, screen, level), levels|
-          next unless screen
+      def roles
+        @subject.roles.to_a
+      end
 
+      def levels
+        @levels ||= stored_levels.each_with_object({}) do |(screen, level), levels|
           key = screen.to_sym
           level = level.to_sym
           levels[key] = level if LEVELS.index(level) > LEVELS.index(levels.fetch(key, :none))
         end
       end
 
-      def rows
-        @rows ||= @subject.roles.left_joins(:permissions).pluck(
-          Role.arel_table[:admin],
-          Role.arel_table[:position],
-          Permission.arel_table[:screen],
-          Permission.arel_table[:level]
-        )
+      def stored_levels
+        Permission.where(role: roles).pluck(:screen, :level)
       end
     end
   end

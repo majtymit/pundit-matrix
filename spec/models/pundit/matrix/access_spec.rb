@@ -69,16 +69,38 @@ RSpec.describe Pundit::Matrix::Access do
     expect { user.access.level(:removed) }.to raise_error(Pundit::Matrix::UnknownScreenError)
   end
 
-  it 'loads the levels once with a single query' do
+  def count_queries(&)
+    queries = []
+    subscriber = ActiveSupport::Notifications.subscribe('sql.active_record') { |*, payload| queries << payload[:sql] }
+    yield
+    queries.size
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber)
+  end
+
+  it 'loads the roles and levels once' do
     user.roles << create_role('Operator', 2, branches: 'read')
     user = User.find(self.user.id)
 
-    queries = []
-    subscriber = ActiveSupport::Notifications.subscribe('sql.active_record') { |*, payload| queries << payload[:sql] }
-    3.times { user.access.read?(:branches) }
-    ActiveSupport::Notifications.unsubscribe(subscriber)
+    expect(count_queries { 3.times { user.access.read?(:branches) } }).to eq(2)
+  end
 
-    expect(queries.size).to eq(1)
+  it 'needs no query for an admin role to read its levels once roles are loaded' do
+    user.roles << create_role('Admin', 1, admin: true)
+    user = User.includes(:roles).find(self.user.id)
+
+    expect(count_queries { user.access.level(:branches) }).to eq(0)
+  end
+
+  it 'checks preloaded subjects without further queries' do
+    manager = create_role('Manager', 2)
+    operator = create_role('Operator', 3)
+    user.roles << manager
+    3.times { |i| User.create!(email: "#{i}@example.com").roles << operator }
+    user.access.position
+    others = User.includes(:roles).where.not(id: user.id).to_a
+
+    expect(count_queries { others.each { |other| user.access.manage?(other) } }).to eq(0)
   end
 
   it 'loads the levels again after the subject is reloaded' do
