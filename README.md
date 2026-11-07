@@ -106,6 +106,8 @@ Put the matrix into the role form and onto the role detail:
 <%= render 'pundit/matrix/levels', role: @role %>
 ```
 
+Both are plain tables that take your admin's look; pass `table_class:` to use its table style, for example `table_class: 'index_table'` in ActiveAdmin.
+
 The form sends `role[levels][branches]=read`, so `@role.update(permitted_attributes(@role))` saves it. For another parameter name, pass `scope: 'pundit_matrix_role'` to the partial.
 
 Warn on the roles screen while nobody is an active superadmin:

@@ -1,7 +1,8 @@
+<% table_class = local_assigns[:table_class] %>
 <% if role.admin? %>
   <p class="pundit-matrix-admin"><%= Pundit::Matrix.t('admin_role') %></p>
 <% else %>
-  <table class="pundit-matrix">
+  <table class="<%= class_names('pundit-matrix', table_class) %>">
     <% Pundit::Matrix.screens.group_by(&:group).each do |group, screens| %>
       <tbody>
         <% if group %>
@@ -9,7 +10,7 @@
         <% end %>
         <% screens.each do |screen| %>
           <tr>
-            <th scope="row"><%= screen.label %></th>
+            <td><%= screen.label %></td>
             <td><%= Pundit::Matrix.t("levels.#{role.levels.fetch(screen.key, :none)}") %></td>
           </tr>
         <% end %>

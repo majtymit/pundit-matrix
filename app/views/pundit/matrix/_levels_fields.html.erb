@@ -1,8 +1,9 @@
 <% scope = local_assigns.fetch(:scope, role.model_name.param_key) %>
+<% table_class = local_assigns[:table_class] %>
 <% if role.admin? %>
   <p class="pundit-matrix-admin"><%= Pundit::Matrix.t('admin_role') %></p>
 <% else %>
-  <table class="pundit-matrix">
+  <table class="<%= class_names('pundit-matrix', table_class) %>">
     <thead>
       <tr>
         <th></th>
@@ -19,7 +20,7 @@
         <% screens.each do |screen| %>
           <% current = role.levels.fetch(screen.key, :none) %>
           <tr>
-            <th scope="row"><%= screen.label %></th>
+            <td><%= screen.label %></td>
             <% Pundit::Matrix::LEVELS.each do |level| %>
               <td>
                 <% if screen.levels.include?(level) %>

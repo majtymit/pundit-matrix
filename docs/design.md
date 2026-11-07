@@ -125,7 +125,8 @@ matrix consistent with the positions is the job of whoever edits it, and only ad
 - The matrix is a widget: `render 'pundit/matrix/levels_fields', role:` in the role form and
   `render 'pundit/matrix/levels', role:` on the role detail. The form sends `levels: { branches: 'read' }`, the host
   permits `levels: {}` and the model saves it.
-- Widgets are plain HTML without a layout or CSS framework, so they take the look of the admin they are in.
+- Widgets are plain HTML without a layout or CSS, so they take the look of the admin they are in. `table_class:` adds
+  the admin's own table class; screen names are plain cells, because admins style every `th` as a header.
 - `render 'pundit/matrix/superadmin_warning', subjects: User` warns on the roles screen while nobody is an active
   superadmin.
 

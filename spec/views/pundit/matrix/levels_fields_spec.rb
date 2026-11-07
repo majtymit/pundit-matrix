@@ -21,7 +21,7 @@ RSpec.describe 'pundit/matrix/_levels_fields' do
     html = render_fields(role:)
 
     expect(html.css('tbody th[scope=rowgroup]').map(&:text)).to eq(['Catalogs'])
-    expect(html.css('tbody th[scope=row]').map(&:text)).to eq(['Branches', 'Audit versions', 'Reservations'])
+    expect(html.css('tbody tr td:first-child').map(&:text)).to eq(['Branches', 'Audit versions', 'Reservations'])
     expect(html.css('input[name="role[levels][branches]"]').map { |input| input['value'] })
       .to eq(%w[none read write])
     expect(html.css('input[name="role[levels][audit_versions]"]').map { |input| input['value'] })
@@ -60,9 +60,13 @@ RSpec.describe 'pundit/matrix/_levels_fields' do
 
     html = render_fields(role:)
 
-    expect(html.css('tbody th').map(&:text)).to include('Offices', 'Data')
+    expect(html.css('tbody th, tbody td').map(&:text)).to include('Offices', 'Data')
   ensure
     I18n.reload!
+  end
+
+  it 'adds the table class of the admin it is in' do
+    expect(render_fields(role:, table_class: 'index_table').at_css('table')['class']).to eq('pundit-matrix index_table')
   end
 
   it 'explains that an admin role has every permission' do
