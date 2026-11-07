@@ -42,10 +42,6 @@ module Pundit
         inject_into_class "app/models/#{subject_name.underscore}.rb", subject_class, "  has_roles\n"
       end
 
-      def mount_engine
-        route "mount Pundit::Matrix::Engine => '/roles'"
-      end
-
       def show_next_steps
         say <<~TEXT
 

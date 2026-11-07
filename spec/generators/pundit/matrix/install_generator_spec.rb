@@ -5,9 +5,7 @@ RSpec.describe Pundit::Matrix::InstallGenerator do
 
   before do
     FileUtils.mkdir_p(File.join(root, 'app/models'))
-    FileUtils.mkdir_p(File.join(root, 'config'))
     File.write(File.join(root, 'app/models/user.rb'), "class User < ApplicationRecord\nend\n")
-    File.write(File.join(root, 'config/routes.rb'), "Rails.application.routes.draw do\nend\n")
   end
 
   after { FileUtils.remove_entry(root) }
@@ -37,7 +35,6 @@ RSpec.describe Pundit::Matrix::InstallGenerator do
     expect(migration).to include("ActiveRecord::Migration[#{ActiveRecord::Migration.current_version}]")
     expect(read('config/initializers/pundit_matrix.rb')).to include("config.table_prefix = 'matrix_'")
     expect(read('app/models/user.rb')).to eq("class User < ApplicationRecord\n  has_roles\nend\n")
-    expect(read('config/routes.rb')).to include("mount Pundit::Matrix::Engine => '/roles'")
     expect(output).to include('Make someone a superadmin')
   end
 

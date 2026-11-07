@@ -6,7 +6,7 @@ app the answers.
 
 - Name `pundit-matrix`, MIT licence, the author's own repo on GitHub.
 - Ruby >= 3.2, Rails >= 7.2. CI runs against every supported Rails minor version.
-- Independent of any admin framework. The UI is a Rails engine rendered in the host app's layout.
+- Independent of any admin framework. The gem has no pages of its own, see [UI](#ui).
 
 ## Terms
 
@@ -40,8 +40,8 @@ app the answers.
 ### Superadmin
 
 - Not a role. The host app owns it: the subject answers `superadmin?`, and `has_roles active_superadmins: -> { ... }`
-  gives a scope of active superadmins (by default every subject with a `superadmin` flag). The gem only reads it. It never shows up in role
-  lists, the matrix or role selects.
+  gives a scope of active superadmins (by default every subject with a `superadmin` flag). The gem only reads it.
+  It never shows up in role lists, the matrix or role selects.
 - Typically a superadmin also holds an admin role. Removing superadmin leaves an ordinary admin.
 - A superadmin can change anything and anyone, including itself and other superadmins. Superadmins are trusted
   by definition.
@@ -50,7 +50,8 @@ app the answers.
   one, but only once a superadmin exists, so a project can start without one.
 - The install generator refuses to run when the subject does not answer the superadmin question, and says what to
   add. Whether a superadmin record actually exists cannot be checked there (the developer's database is not
-  production, and a fresh project has no subjects yet), so the roles screen shows a warning while none exists.
+  production, and a fresh project has no subjects yet), so the gem gives a warning widget for the roles screen
+  that shows while none exists.
   The app keeps working, so deploys and tests do not break.
 
 ### Admin
@@ -58,8 +59,8 @@ app the answers.
 - A role with the `admin` flag.
 - Only a superadmin can create a role with the flag, remove the flag, or assign an admin role.
 - Gets every permission automatically, including screens added later. It has no row in the matrix.
-- Is the only kind of role (besides superadmin) that can open the roles screen and the matrix. The roles screen is
-  not part of the matrix, so it cannot be granted to an ordinary role by mistake.
+- Is the only kind of role (besides superadmin) that can manage roles and the matrix. Roles are not a screen in the
+  matrix, so managing them cannot be granted to an ordinary role by mistake.
 - Admin roles are positioned above every ordinary role.
 - Cannot touch superadmins or subjects with an admin role, whatever the positions.
 - Cannot change its own roles.
@@ -81,8 +82,7 @@ app the answers.
   which of two roles is higher. Position 1 is the highest.
 - A role that is held by any subject cannot be deleted.
 - Changing a role's name, position or permissions is done on the roles screen (admins only).
-- The host app includes the gem's concern in its subject model. That gives the subject its roles and the
-  validations above.
+- The host app calls `has_roles` in its subject model. That gives the subject its roles and the validations above.
 - The assignment table allows several roles per subject from the start. With more than one, all permissions from
   all roles apply: for each screen the highest level from any of them, and the subject's position is that of its
   highest role. Allowing a second role in the UI is a later step (see nice-to-have); the first version assigns one.
@@ -108,10 +108,23 @@ matrix consistent with the positions is the job of whoever edits it, and only ad
 
 - The gem is written for any project. Nothing in it may assume a particular
   admin framework, subject model or existing data.
-- `rails generate pundit:matrix:install User` creates the migration and the initializer, adds `has_roles` to the
-  model and mounts the engine at `/roles`. It reads the schema to check the model and the existing tables, but never
-  runs migrations or changes the database.
+- `rails generate pundit:matrix:install User` creates the migration and the initializer and adds `has_roles` to the
+  model. It reads the schema to check the model and the existing tables, but never runs migrations or changes the
+  database.
 - There is no uninstall. Removing the gem is the project's own job.
+
+## UI
+
+- The gem has no pages, controllers or routes of its own. Roles are an ordinary model, so the host manages them as a
+  resource in its own admin (`ActiveAdmin.register Pundit::Matrix::Role` or a plain controller), and lists, forms and
+  styling stay native to that admin.
+- The gem never asks who is signed in. Its policies get the subject from Pundit, so whatever the host passes there
+  (`current_user`, `current_admin_user`) works without configuration.
+- The host's role policy inherits from `Pundit::Matrix::RolePolicy`: only admins and superadmins manage roles, only a
+  superadmin sets the admin flag.
+- The matrix is a widget: a partial the host puts into the role form, and a read-only variant for the role detail.
+  The form sends `levels: { branches: 'read' }`, the host permits `levels: {}` and the model saves it.
+- Widgets are plain HTML without a layout or CSS framework, so they take the look of the admin they are in.
 
 ## Caching
 
@@ -139,7 +152,7 @@ The gem:
 - Pundit integration: the base policy calls `extend Pundit::Matrix::Policy`, each policy declares its screen with
   `screen :branches`; `index?` and `show?` need `read`, everything else needs `write`, and custom actions (run a job,
   unblock, import) are written as `def import? = write?`
-- the roles and matrix UI as an engine
+- the role policy, the matrix widget and the missing superadmin warning
 - helpers for the host's subject screen: `a.access.manage?(b)`, `a.access.assign?(role)` and
   `a.access.assignable_roles`; whether A has write on the subjects screen is checked by the host's policy
 
