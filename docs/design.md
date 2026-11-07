@@ -25,9 +25,9 @@ app the answers.
 - A screen with no level set for a role means `none`. A new screen is therefore closed for every ordinary role
   until someone opens it in the matrix.
 - The levels are fixed. A project cannot add its own.
-- Rows for a key the host app no longer declares are ignored and can be removed by a rake task.
-- Renaming a screen key needs a data migration, otherwise every ordinary role loses access to it. The gem gives a
-  helper for that migration.
+- Rows for a key the host app no longer declares are ignored. Removing them is up to the project.
+- Renaming a screen key needs a data migration in the project, otherwise every ordinary role loses access to it.
+  The README shows how.
 
 ## Three kinds of access
 
