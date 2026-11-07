@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "pundit"
-require_relative "matrix/version"
-require_relative "matrix/configuration"
+require 'pundit'
+require_relative 'matrix/version'
+require_relative 'matrix/configuration'
 
 module Pundit
   module Matrix
@@ -24,4 +24,4 @@ module Pundit
   end
 end
 
-require_relative "matrix/engine"
+require_relative 'matrix/engine'

@@ -1,23 +1,23 @@
 # frozen_string_literal: true
 
-require_relative "lib/pundit/matrix/version"
+require_relative 'lib/pundit/matrix/version'
 
 Gem::Specification.new do |spec|
-  spec.name = "pundit-matrix"
+  spec.name = 'pundit-matrix'
   spec.version = Pundit::Matrix::VERSION
-  spec.authors = ["Mišo"]
-  spec.email = ["majtymit@gmail.com"]
+  spec.authors = ['Mišo']
+  spec.email = ['majtymit@gmail.com']
 
-  spec.summary = "Roles, a permission matrix and a UI to manage them, on top of Pundit."
-  spec.description = "Roles with none, read and write levels per screen, a matrix to edit them and rules for " \
-                     "who can manage whom, independent of any admin framework."
-  spec.homepage = "https://github.com/majtymit/pundit-matrix"
-  spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.2.0"
-  spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = spec.homepage
-  spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/main/CHANGELOG.md"
-  spec.metadata["rubygems_mfa_required"] = "true"
+  spec.summary = 'Roles, a permission matrix and a UI to manage them, on top of Pundit.'
+  spec.description = 'Roles with none, read and write levels per screen, a matrix to edit them and rules for ' \
+                     'who can manage whom, independent of any admin framework.'
+  spec.homepage = 'https://github.com/majtymit/pundit-matrix'
+  spec.license = 'MIT'
+  spec.required_ruby_version = '>= 3.2.0'
+  spec.metadata['homepage_uri'] = spec.homepage
+  spec.metadata['source_code_uri'] = spec.homepage
+  spec.metadata['changelog_uri'] = "#{spec.homepage}/blob/main/CHANGELOG.md"
+  spec.metadata['rubygems_mfa_required'] = 'true'
 
   gemspec = File.basename(__FILE__)
   spec.files = IO.popen(%w[git ls-files -z], chdir: __dir__, err: IO::NULL) do |ls|
@@ -26,10 +26,10 @@ Gem::Specification.new do |spec|
         f.start_with?(*%w[bin/ docs/ gemfiles/ Gemfile .gitignore .rspec spec/ .github/ .rubocop.yml])
     end
   end
-  spec.require_paths = ["lib"]
+  spec.require_paths = ['lib']
 
-  spec.add_dependency "actionpack", ">= 7.2"
-  spec.add_dependency "activerecord", ">= 7.2"
-  spec.add_dependency "pundit", ">= 2.3"
-  spec.add_dependency "railties", ">= 7.2"
+  spec.add_dependency 'actionpack', '>= 7.2'
+  spec.add_dependency 'activerecord', '>= 7.2'
+  spec.add_dependency 'pundit', '>= 2.3'
+  spec.add_dependency 'railties', '>= 7.2'
 end

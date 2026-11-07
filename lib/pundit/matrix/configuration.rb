@@ -6,8 +6,8 @@ module Pundit
       attr_accessor :subject_class, :table_prefix
 
       def initialize
-        @subject_class = "User"
-        @table_prefix = ""
+        @subject_class = 'User'
+        @table_prefix = ''
       end
     end
   end
