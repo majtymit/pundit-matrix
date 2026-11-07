@@ -21,9 +21,10 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
-      - run: bundle exec rspec
+      - name: RSpec
+        run: bundle exec rspec
 
-  ci:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,4 +32,20 @@ jobs:
         with:
           ruby-version: "4.0"
           bundler-cache: true
-      - run: bin/ci
+      - name: RuboCop
+        run: bundle exec rubocop
+      - name: Markdown
+        run: npx --yes markdownlint-cli@0.50.0 '**/*.md'
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+      - name: Brakeman
+        run: bundle exec brakeman --force -A -q --no-progress --no-pager --exit-on-warn
+      - name: Bundler audit
+        run: bundle exec bundler-audit check --update --quiet
