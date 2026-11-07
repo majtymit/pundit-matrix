@@ -1,6 +1,8 @@
 en:
   activerecord:
     errors:
+      messages:
+        last_superadmin: At least one active superadmin must remain
       models:
         pundit/matrix/role:
           attributes:

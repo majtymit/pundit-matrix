@@ -39,13 +39,15 @@ app the answers.
 
 ### Superadmin
 
-- Not a role. The host app owns it: the subject answers whether it is a superadmin and whether it is active, and
-  the gem only reads it. It never shows up in role lists, the matrix or role selects.
+- Not a role. The host app owns it: the subject answers `superadmin?`, and the configuration gives a scope of active
+  superadmins (by default every subject with a `superadmin` flag). The gem only reads it. It never shows up in role
+  lists, the matrix or role selects.
 - Typically a superadmin also holds an admin role. Removing superadmin leaves an ordinary admin.
 - A superadmin can change anything and anyone, including itself and other superadmins. Superadmins are trusted
   by definition.
 - Only a superadmin can make someone a superadmin or take it away.
-- At least one active superadmin must always exist. The gem's subject concern validates it.
+- At least one active superadmin must always exist. The gem's subject concern refuses to save or delete the last
+  one, but only once a superadmin exists, so a project can start without one.
 - The install generator refuses to run when the subject does not answer the superadmin question, and says what to
   add. Whether a superadmin record actually exists cannot be checked there (the developer's database is not
   production, and a fresh project has no subjects yet), so the roles screen shows a warning while none exists.

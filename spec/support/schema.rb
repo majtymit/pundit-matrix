@@ -5,6 +5,8 @@ ActiveRecord::Migration.verbose = false
 ActiveRecord::Schema.define do
   create_table :users do |t|
     t.string :email, null: false
+    t.boolean :superadmin, null: false, default: false
+    t.datetime :deactivated_at
   end
 end
 
