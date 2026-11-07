@@ -2,7 +2,7 @@
 
 RSpec.describe Pundit::Matrix do
   it 'has a version number' do
-    expect(Pundit::Matrix::VERSION).not_to be nil
+    expect(Pundit::Matrix::VERSION).not_to be_nil
   end
 
   describe '.configure' do

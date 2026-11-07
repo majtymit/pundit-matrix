@@ -1,5 +1,10 @@
+plugins:
+  - rubocop-rails
+  - rubocop-rspec
+
 AllCops:
   TargetRubyVersion: 3.2
+  TargetRailsVersion: 7.2
   NewCops: disable
   SuggestExtensions: false
 
@@ -11,3 +16,12 @@ Style/StringLiteralsInInterpolation:
 
 Style/Documentation:
   Enabled: false
+
+RSpec/MultipleExpectations:
+  Enabled: false
+
+RSpec/ExampleLength:
+  Enabled: false
+
+RSpec/NestedGroups:
+  Max: 4

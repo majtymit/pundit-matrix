@@ -13,3 +13,5 @@ gem 'rspec-rails'
 gem 'sqlite3'
 
 gem 'rubocop', '~> 1.21'
+gem 'rubocop-rails', require: false
+gem 'rubocop-rspec', require: false
