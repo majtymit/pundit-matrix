@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 RSpec.describe Pundit::Matrix::Permission do
   include_context 'with fresh configuration'
 

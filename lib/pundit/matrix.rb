@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require 'pundit'
 require_relative 'matrix/version'
 require_relative 'matrix/screen'

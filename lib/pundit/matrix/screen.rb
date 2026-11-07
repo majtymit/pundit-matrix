@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 module Pundit
   module Matrix
     Screen = Data.define(:key, :group, :read_only) do

@@ -43,3 +43,6 @@ Layout/MultilineMethodArgumentLineBreaks:
 
 Layout/MultilineMethodParameterLineBreaks:
   Enabled: true
+
+Style/FrozenStringLiteralComment:
+  Enabled: false

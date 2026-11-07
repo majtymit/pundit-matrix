@@ -15,6 +15,7 @@ jobs:
         rails: ["7_2", "8_0", "8_1"]
     env:
       BUNDLE_GEMFILE: gemfiles/rails_${{ matrix.rails }}.gemfile
+      COVERAGE: true
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1

@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 RSpec.describe Pundit::Matrix::Screens do
   subject(:screens) { described_class.new }
 

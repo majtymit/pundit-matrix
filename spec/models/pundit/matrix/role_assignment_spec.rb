@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 RSpec.describe Pundit::Matrix::RoleAssignment do
   let(:role) { Pundit::Matrix::Role.create!(name: 'Operator', position: 1) }
   let(:user) { User.create!(email: 'a@example.com') }

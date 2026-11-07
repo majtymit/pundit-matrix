@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 RSpec.shared_context 'with fresh configuration' do
   around do |example|
     original = Pundit::Matrix.config

@@ -1,10 +1,11 @@
-# frozen_string_literal: true
-
 ENV['RAILS_ENV'] = 'test'
 
 if ENV['COVERAGE']
   require 'simplecov'
-  SimpleCov.start { add_filter '/spec/' }
+  SimpleCov.start do
+    add_filter '/spec/'
+    minimum_coverage line: 100
+  end
 end
 
 require_relative 'dummy/config/environment'

@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 RSpec.describe Pundit::Matrix::Role do
   def create_role(name, position, admin: false)
     described_class.create!(name:, position:, admin:)
