@@ -23,7 +23,7 @@ jobs:
           bundler-cache: true
       - run: bundle exec rspec
 
-  lint:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,4 +31,4 @@ jobs:
         with:
           ruby-version: "4.0"
           bundler-cache: true
-      - run: bundle exec rubocop
+      - run: bin/ci
