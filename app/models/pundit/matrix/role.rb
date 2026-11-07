@@ -1,7 +1,7 @@
 module Pundit
   module Matrix
     class Role < ApplicationRecord
-      has_many :permissions, dependent: :delete_all
+      has_many :permissions, dependent: :delete_all, autosave: true
       has_many :role_assignments, dependent: :restrict_with_error
 
       validates :name, presence: true, uniqueness: true
@@ -15,6 +15,20 @@ module Pundit
 
       def higher_than?(other)
         position < other.position
+      end
+
+      def levels
+        permissions.reject(&:marked_for_destruction?).to_h do |permission|
+          [permission.screen.to_sym, permission.level.to_sym]
+        end
+      end
+
+      def levels=(levels)
+        levels.each do |screen, level|
+          permission = permissions.find { |existing| existing.screen == screen.to_s }
+          permission ||= permissions.build(screen: screen.to_s)
+          level.to_s == 'none' ? permission.mark_for_destruction : permission.assign_attributes(level: level.to_s)
+        end
       end
 
       private

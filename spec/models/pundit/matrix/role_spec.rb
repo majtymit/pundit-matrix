@@ -86,4 +86,52 @@ RSpec.describe Pundit::Matrix::Role do
       described_class.reset_table_name
     end
   end
+
+  describe '#levels' do
+    include_context 'with fresh configuration'
+
+    let(:role) { described_class.create!(name: 'Operator', position: 2) }
+
+    before do
+      Pundit::Matrix.screens.draw do
+        screen :branches
+        screen :reservations
+        screen :audit_versions, read_only: true
+      end
+    end
+
+    it 'saves the levels sent by a form' do
+      role.update!(levels: { 'branches' => 'write', 'reservations' => 'read', 'audit_versions' => 'none' })
+
+      expect(role.reload.levels).to eq(branches: :write, reservations: :read)
+    end
+
+    it 'changes and removes levels already saved' do
+      role.update!(levels: { branches: 'write', reservations: 'read' })
+
+      role.update!(levels: { branches: 'read', reservations: 'none' })
+
+      expect(role.reload.levels).to eq(branches: :read)
+      expect(role.permissions.count).to eq(1)
+    end
+
+    it 'keeps levels not sent by the form' do
+      role.update!(levels: { branches: 'write' })
+
+      role.update!(levels: { reservations: 'read' })
+
+      expect(role.reload.levels).to eq(branches: :write, reservations: :read)
+    end
+
+    it 'refuses a level the screen does not offer and saves nothing' do
+      expect(role.update(levels: { branches: 'read', audit_versions: 'write' })).to be(false)
+      expect(role.reload.levels).to be_empty
+    end
+
+    it 'shows levels not saved yet' do
+      role.levels = { branches: 'read' }
+
+      expect(role.levels).to eq(branches: :read)
+    end
+  end
 end
