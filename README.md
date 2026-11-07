@@ -4,9 +4,11 @@ Roles and a permission matrix for Rails apps that authorize with [Pundit](https:
 
 Every screen of your app is one permission with three levels: no access, read and write. Roles get a level per screen, subjects (usually users) get roles, and your policies ask the matrix. There are no pages of its own: you manage roles in the admin you already have, and the matrix is a partial that takes its look.
 
-- **Superadmin** – a flag on the subject. Has everything and manages everyone, including other superadmins.
-- **Admin role** – a role with the `admin` flag. Has every screen, including later ones, and manages roles and every subject below admin.
-- **Ordinary role** – has what the matrix says. Manages only subjects with a lower role.
+You create as many roles as you need, ordered by position. Access comes in three kinds:
+
+- **Superadmin** – a flag on the subject, not a role. Has everything and manages everyone, including other superadmins.
+- **Admin roles** – any role with the `admin` flag. Has every screen, including later ones, and manages roles and every subject below admin.
+- **Ordinary roles** – every other role. Has what the matrix says and manages only subjects with a lower role.
 
 Requires Ruby 3.2+, Rails 7.2+ and Pundit 2.3+.
 
