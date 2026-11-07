@@ -11,6 +11,15 @@ module Pundit
         before_destroy :keep_an_active_superadmin_on_destroy, prepend: true
       end
 
+      def access
+        @access ||= Pundit::Matrix::Access.new(self)
+      end
+
+      def reload(*)
+        @access = nil
+        super
+      end
+
       private
 
       def keep_an_active_superadmin
