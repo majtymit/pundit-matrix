@@ -84,4 +84,79 @@ RSpec.describe Pundit::Matrix::Policy do
 
     expect(application_policy.new(user, :order).index?).to be(false)
   end
+
+  it 'shows the history of a record to whoever writes on the screen' do
+    expect(order_policy.new(user, :order).history?).to be(false)
+
+    give('write')
+
+    expect(order_policy.new(user.reload, :order).history?).to be(true)
+  end
+
+  describe 'actions that belong to another screen' do
+    let(:setting_policy) do
+      Class.new(application_policy) do
+        screen :settings
+        actions_of_screen :orders, :remove_overrides, 'copy_overrides'
+        actions_of_screen :reports, :export
+
+        def export?
+          read?(:reports)
+        end
+      end
+    end
+
+    before do
+      Pundit::Matrix.screens.draw do
+        screen :settings
+        screen :reports
+      end
+    end
+
+    it 'needs write on that screen' do
+      give('write')
+
+      policy = setting_policy.new(user, :setting)
+      expect([policy.remove_overrides?, policy.copy_overrides?, policy.update?]).to eq([true, true, false])
+    end
+
+    it 'keeps what the policy defines itself' do
+      user.roles << Pundit::Matrix::Role.create!(name: 'Reader', position: 2, levels: { reports: 'read' })
+
+      expect(setting_policy.new(user, :setting).export?).to be(true)
+    end
+
+    it 'declares which screen each of them belongs to' do
+      expect(setting_policy.matrix_screen_actions)
+        .to eq(remove_overrides: :orders, copy_overrides: :orders, export: :reports)
+    end
+
+    it 'allows nothing without a subject' do
+      expect(setting_policy.new(nil, :setting).remove_overrides?).to be(false)
+    end
+  end
+
+  describe 'a screen for admins only' do
+    let(:trail_policy) { Class.new(application_policy) { admin_screen } }
+
+    it 'lets admins and superadmins read it and nobody write it' do
+      admin = User.create!(email: 'admin@example.com')
+      admin.roles << Pundit::Matrix::Role.create!(name: 'Admin', position: 1, admin: true)
+      superadmin = User.create!(email: 'super@example.com', superadmin: true)
+      user.roles << Pundit::Matrix::Role.create!(name: 'Writer', position: 2, levels: { orders: 'write' })
+
+      [admin, superadmin].each do |subject|
+        policy = trail_policy.new(subject, :version)
+        expect(%i[index? show? history?].map { |action| policy.public_send(action) }).to all(be(true))
+        expect(%i[new? create? edit? update? destroy?].map { |action| policy.public_send(action) }).to all(be(false))
+      end
+      expect(trail_policy.new(user, :version).index?).to be(false)
+      expect(trail_policy.new(nil, :version).index?).to be(false)
+    end
+
+    it 'keeps the screen out of the matrix' do
+      expect(trail_policy).to be_matrix_admin_screen
+      expect(trail_policy).not_to respond_to(:matrix_screen)
+    end
+  end
 end

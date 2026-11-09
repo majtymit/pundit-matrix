@@ -41,4 +41,8 @@ RSpec.describe Pundit::Matrix::RolePolicy do
     expect(described_class::Scope.new(operator, Pundit::Matrix::Role).resolve).to be_empty
     expect(described_class::Scope.new(nil, Pundit::Matrix::Role).resolve).to be_empty
   end
+
+  it 'is a screen for admins, outside the matrix' do
+    expect(described_class).to be_matrix_admin_screen
+  end
 end

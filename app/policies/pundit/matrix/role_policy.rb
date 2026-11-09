@@ -3,6 +3,10 @@ module Pundit
     class RolePolicy
       attr_reader :user, :record
 
+      def self.matrix_admin_screen?
+        true
+      end
+
       def initialize(user, record)
         @user = user
         @record = record

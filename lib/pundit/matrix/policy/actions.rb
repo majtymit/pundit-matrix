@@ -30,12 +30,22 @@ module Pundit
           write?
         end
 
-        def read?
-          user.present? && user.access.read?(matrix_screen)
+        def history?
+          write?
         end
 
-        def write?
-          user.present? && user.access.write?(matrix_screen)
+        def read?(screen = matrix_screen)
+          user.present? && user.access.read?(screen)
+        end
+
+        def write?(screen = matrix_screen)
+          user.present? && user.access.write?(screen)
+        end
+
+        private
+
+        def matrix_screen
+          self.class.matrix_screen
         end
       end
     end
