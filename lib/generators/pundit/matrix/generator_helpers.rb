@@ -44,6 +44,19 @@ module Pundit
         true
       end
 
+      # Below the comment that describes the class, or after the last include or extend, so the class still opens
+      # with its description and its mixins.
+      def roles_insertion(lines)
+        opening = lines.index { |line| line.match?(/^\s*class #{subject_name.demodulize}\b/) }
+        indent = "#{lines[opening][/^\s*/]}  "
+        mixin = lines.rindex { |line| line.match?(/^#{indent}(include|extend) \S/) }
+        return [lines[0..mixin].join, "\n#{indent}has_roles\n"] if mixin
+
+        last = opening
+        last += 1 while lines[last + 1]&.match?(/^#{indent}#/)
+        [lines[0..last].join, "#{indent}has_roles\n"]
+      end
+
       def subject_key
         subject_name.demodulize.underscore.pluralize
       end

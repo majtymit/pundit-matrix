@@ -1,0 +1,3 @@
+# Pundit looks for RolePolicy for Pundit::Matrix::Role. The rules live in the gem; override actions here if needed.
+class RolePolicy < Pundit::Matrix::RolePolicy
+end
