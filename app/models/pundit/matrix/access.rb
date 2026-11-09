@@ -26,6 +26,10 @@ module Pundit
         superadmin? || admin?
       end
 
+      def any?
+        everything? || Pundit::Matrix.screens.any? { |screen| levels.key?(screen.key) }
+      end
+
       def admin?
         roles.any?(&:admin?)
       end

@@ -109,4 +109,29 @@ RSpec.describe Pundit::Matrix::Access do
 
     expect(user.reload.access.level(:orders)).to eq(:write)
   end
+
+  describe '#any?' do
+    it 'is false without a role or with levels only on screens no longer declared' do
+      expect(user.access).not_to be_any
+
+      role = create_role('Operator', 2)
+      role.permissions.new(screen: 'old_screen', level: 'read').save!(validate: false)
+      user.roles << role
+
+      expect(user.reload.access).not_to be_any
+    end
+
+    it 'is true with read on one screen' do
+      user.roles << create_role('Operator', 2, audit_log: 'read')
+
+      expect(user.access).to be_any
+    end
+
+    it 'is true for admins and superadmins' do
+      user.roles << create_role('Admin', 1, admin: true)
+
+      expect(user.access).to be_any
+      expect(User.new(superadmin: true).access).to be_any
+    end
+  end
 end

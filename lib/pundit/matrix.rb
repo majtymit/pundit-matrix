@@ -6,6 +6,7 @@ require_relative 'matrix/configuration'
 require_relative 'matrix/model'
 require_relative 'matrix/policy'
 require_relative 'matrix/policy/actions'
+require_relative 'matrix/policy/subject_actions'
 require_relative 'matrix/current'
 require_relative 'matrix/controller'
 

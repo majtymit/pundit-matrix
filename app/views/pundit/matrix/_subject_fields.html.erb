@@ -1,0 +1,20 @@
+<% scope = local_assigns.fetch(:scope, subject.model_name.param_key) %>
+<% actor = Pundit::Matrix::Current.actor %>
+<fieldset class="pundit-matrix-roles">
+  <legend><%= subject.class.human_attribute_name(:roles) %></legend>
+  <%= hidden_field_tag "#{scope}[role_ids][]", '', id: nil %>
+  <% Pundit::Matrix::Role.ordered.each do |role| %>
+    <label>
+      <%= check_box_tag "#{scope}[role_ids][]", role.id, subject.roles.include?(role),
+                        id: nil, disabled: actor.present? && !actor.access.assign?(role) %>
+      <%= role.name %>
+    </label>
+  <% end %>
+</fieldset>
+<% if actor&.access&.superadmin? %>
+  <label class="pundit-matrix-superadmin">
+    <%= hidden_field_tag "#{scope}[superadmin]", '0', id: nil %>
+    <%= check_box_tag "#{scope}[superadmin]", '1', subject.superadmin?, id: nil %>
+    <%= subject.class.human_attribute_name(:superadmin) %>
+  </label>
+<% end %>

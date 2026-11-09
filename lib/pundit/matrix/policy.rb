@@ -7,6 +7,11 @@ module Pundit
         define_method(:matrix_screen) { key }
         private :matrix_screen
       end
+
+      def subject_screen(key)
+        screen(key)
+        include SubjectActions
+      end
     end
   end
 end
