@@ -22,9 +22,9 @@ RSpec.describe Pundit::Matrix::Policy do
     end
   end
 
-  let(:branch_policy) do
+  let(:order_policy) do
     Class.new(application_policy) do
-      screen :branches
+      screen :orders
 
       def import?
         write?
@@ -34,16 +34,16 @@ RSpec.describe Pundit::Matrix::Policy do
 
   let(:user) { User.create!(email: 'a@example.com') }
 
-  before { Pundit::Matrix.screens.draw { screen :branches } }
+  before { Pundit::Matrix.screens.draw { screen :orders } }
 
   def give(level)
     role = Pundit::Matrix::Role.create!(name: 'Operator', position: 1)
-    role.permissions.create!(screen: 'branches', level:)
+    role.permissions.create!(screen: 'orders', level:)
     user.roles << role
   end
 
   def allowed(user)
-    policy = branch_policy.new(user, :branch)
+    policy = order_policy.new(user, :order)
     %i[index? show? new? create? edit? update? destroy? import?].select { |action| policy.public_send(action) }
   end
 
@@ -70,18 +70,18 @@ RSpec.describe Pundit::Matrix::Policy do
   it 'keeps actions the policy defines itself' do
     give('write')
 
-    policy = Class.new(branch_policy) do
+    policy = Class.new(order_policy) do
       def destroy?
         false
       end
     end
 
-    expect(policy.new(user, :branch).destroy?).to be(false)
+    expect(policy.new(user, :order).destroy?).to be(false)
   end
 
   it 'leaves policies without a screen to the base policy' do
     give('write')
 
-    expect(application_policy.new(user, :branch).index?).to be(false)
+    expect(application_policy.new(user, :order).index?).to be(false)
   end
 end

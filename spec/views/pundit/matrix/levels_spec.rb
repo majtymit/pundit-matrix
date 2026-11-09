@@ -3,10 +3,10 @@ RSpec.describe 'pundit/matrix/_levels' do
 
   before do
     Pundit::Matrix.screens.draw do
-      group :catalogs do
-        screen :branches
+      group :sales do
+        screen :orders
       end
-      screen :reservations
+      screen :invoices
     end
   end
 
@@ -15,11 +15,11 @@ RSpec.describe 'pundit/matrix/_levels' do
   end
 
   it 'shows the level of every screen' do
-    role = Pundit::Matrix::Role.create!(name: 'Operator', position: 2, levels: { branches: 'read' })
+    role = Pundit::Matrix::Role.create!(name: 'Operator', position: 2, levels: { orders: 'read' })
 
     rows = render_levels(role).css('tr').map { |row| row.css('th, td').map(&:text) }
 
-    expect(rows).to eq([['Catalogs'], ['Branches', 'Read'], ['Reservations', 'No access']])
+    expect(rows).to eq([['Sales'], ['Orders', 'Read'], ['Invoices', 'No access']])
   end
 
   it 'adds the table class of the admin it is in' do

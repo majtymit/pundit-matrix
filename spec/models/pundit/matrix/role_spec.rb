@@ -70,9 +70,9 @@ RSpec.describe Pundit::Matrix::Role do
     include_context 'with fresh configuration'
 
     it 'deletes its permissions with it' do
-      Pundit::Matrix.screens.draw { screen :branches }
+      Pundit::Matrix.screens.draw { screen :orders }
       role = create_role('Operator', 1)
-      role.permissions.create!(screen: 'branches', level: 'read')
+      role.permissions.create!(screen: 'orders', level: 'read')
 
       expect { role.destroy }.to change(Pundit::Matrix::Permission, :count).by(-1)
     end
@@ -94,44 +94,44 @@ RSpec.describe Pundit::Matrix::Role do
 
     before do
       Pundit::Matrix.screens.draw do
-        screen :branches
-        screen :reservations
-        screen :audit_versions, read_only: true
+        screen :orders
+        screen :invoices
+        screen :audit_log, read_only: true
       end
     end
 
     it 'saves the levels sent by a form' do
-      role.update!(levels: { 'branches' => 'write', 'reservations' => 'read', 'audit_versions' => 'none' })
+      role.update!(levels: { 'orders' => 'write', 'invoices' => 'read', 'audit_log' => 'none' })
 
-      expect(role.reload.levels).to eq(branches: :write, reservations: :read)
+      expect(role.reload.levels).to eq(orders: :write, invoices: :read)
     end
 
     it 'changes and removes levels already saved' do
-      role.update!(levels: { branches: 'write', reservations: 'read' })
+      role.update!(levels: { orders: 'write', invoices: 'read' })
 
-      role.update!(levels: { branches: 'read', reservations: 'none' })
+      role.update!(levels: { orders: 'read', invoices: 'none' })
 
-      expect(role.reload.levels).to eq(branches: :read)
+      expect(role.reload.levels).to eq(orders: :read)
       expect(role.permissions.count).to eq(1)
     end
 
     it 'keeps levels not sent by the form' do
-      role.update!(levels: { branches: 'write' })
+      role.update!(levels: { orders: 'write' })
 
-      role.update!(levels: { reservations: 'read' })
+      role.update!(levels: { invoices: 'read' })
 
-      expect(role.reload.levels).to eq(branches: :write, reservations: :read)
+      expect(role.reload.levels).to eq(orders: :write, invoices: :read)
     end
 
     it 'refuses a level the screen does not offer and saves nothing' do
-      expect(role.update(levels: { branches: 'read', audit_versions: 'write' })).to be(false)
+      expect(role.update(levels: { orders: 'read', audit_log: 'write' })).to be(false)
       expect(role.reload.levels).to be_empty
     end
 
     it 'shows levels not saved yet' do
-      role.levels = { branches: 'read' }
+      role.levels = { orders: 'read' }
 
-      expect(role.levels).to eq(branches: :read)
+      expect(role.levels).to eq(orders: :read)
     end
   end
 end

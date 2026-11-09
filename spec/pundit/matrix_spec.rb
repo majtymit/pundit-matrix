@@ -19,11 +19,11 @@ RSpec.describe Pundit::Matrix do
     it 'declares screens' do
       described_class.configure do |config|
         config.screens do
-          screen :branches
+          screen :orders
         end
       end
 
-      expect(described_class.screens.map(&:key)).to eq([:branches])
+      expect(described_class.screens.map(&:key)).to eq([:orders])
     end
   end
 

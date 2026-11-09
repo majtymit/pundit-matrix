@@ -5,9 +5,9 @@ RSpec.describe Pundit::Matrix::Access do
 
   before do
     Pundit::Matrix.screens.draw do
-      screen :branches
-      screen :reservations
-      screen :audit_versions, read_only: true
+      screen :orders
+      screen :invoices
+      screen :audit_log, read_only: true
     end
   end
 
@@ -18,51 +18,51 @@ RSpec.describe Pundit::Matrix::Access do
   end
 
   it 'gives no access without a role' do
-    expect(user.access.level(:branches)).to eq(:none)
-    expect(user.access).not_to be_read(:branches)
-    expect(user.access).not_to be_write(:branches)
+    expect(user.access.level(:orders)).to eq(:none)
+    expect(user.access).not_to be_read(:orders)
+    expect(user.access).not_to be_write(:orders)
   end
 
   it 'gives the level the role has on a screen' do
-    user.roles << create_role('Operator', 2, branches: 'read')
+    user.roles << create_role('Operator', 2, orders: 'read')
 
-    expect(user.access.level(:branches)).to eq(:read)
-    expect(user.access).to be_read(:branches)
-    expect(user.access).not_to be_write(:branches)
-    expect(user.access.level(:reservations)).to eq(:none)
+    expect(user.access.level(:orders)).to eq(:read)
+    expect(user.access).to be_read(:orders)
+    expect(user.access).not_to be_write(:orders)
+    expect(user.access.level(:invoices)).to eq(:none)
   end
 
   it 'gives the highest level from all roles of the subject' do
-    user.roles << create_role('Operator', 2, branches: 'write', reservations: 'read')
-    user.roles << create_role('Accountant', 3, branches: 'read', audit_versions: 'read')
+    user.roles << create_role('Operator', 2, orders: 'write', invoices: 'read')
+    user.roles << create_role('Accountant', 3, orders: 'read', audit_log: 'read')
 
-    expect(user.access.level(:branches)).to eq(:write)
-    expect(user.access.level(:reservations)).to eq(:read)
-    expect(user.access.level(:audit_versions)).to eq(:read)
+    expect(user.access.level(:orders)).to eq(:write)
+    expect(user.access.level(:invoices)).to eq(:read)
+    expect(user.access.level(:audit_log)).to eq(:read)
   end
 
   it 'gives an admin role everything the screens offer' do
     user.roles << create_role('Admin', 1, admin: true)
 
     expect(user.access).to be_everything
-    expect(user.access.level(:branches)).to eq(:write)
-    expect(user.access.level(:audit_versions)).to eq(:read)
+    expect(user.access.level(:orders)).to eq(:write)
+    expect(user.access.level(:audit_log)).to eq(:read)
   end
 
   it 'gives a superadmin everything without a role' do
     user.update!(superadmin: true)
 
     expect(user.access).to be_everything
-    expect(user.access.level(:reservations)).to eq(:write)
+    expect(user.access.level(:invoices)).to eq(:write)
   end
 
   it 'ignores levels stored for a screen that is no longer declared' do
-    user.roles << create_role('Operator', 2, branches: 'read', reservations: 'write')
+    user.roles << create_role('Operator', 2, orders: 'read', invoices: 'write')
     Pundit::Matrix.instance_variable_set(:@config, Pundit::Matrix::Configuration.new)
-    Pundit::Matrix.screens.draw { screen :branches }
+    Pundit::Matrix.screens.draw { screen :orders }
 
-    expect(user.access.level(:branches)).to eq(:read)
-    expect { user.access.level(:reservations) }.to raise_error(Pundit::Matrix::UnknownScreenError)
+    expect(user.access.level(:orders)).to eq(:read)
+    expect { user.access.level(:invoices) }.to raise_error(Pundit::Matrix::UnknownScreenError)
   end
 
   it 'raises for a screen that is not declared' do
@@ -79,17 +79,17 @@ RSpec.describe Pundit::Matrix::Access do
   end
 
   it 'loads the roles and levels once' do
-    user.roles << create_role('Operator', 2, branches: 'read')
+    user.roles << create_role('Operator', 2, orders: 'read')
     user = User.find(self.user.id)
 
-    expect(count_queries { 3.times { user.access.read?(:branches) } }).to eq(2)
+    expect(count_queries { 3.times { user.access.read?(:orders) } }).to eq(2)
   end
 
   it 'needs no query for an admin role to read its levels once roles are loaded' do
     user.roles << create_role('Admin', 1, admin: true)
     user = User.includes(:roles).find(self.user.id)
 
-    expect(count_queries { user.access.level(:branches) }).to eq(0)
+    expect(count_queries { user.access.level(:orders) }).to eq(0)
   end
 
   it 'checks preloaded subjects without further queries' do
@@ -104,9 +104,9 @@ RSpec.describe Pundit::Matrix::Access do
   end
 
   it 'loads the levels again after the subject is reloaded' do
-    user.access.level(:branches)
-    user.roles << create_role('Operator', 2, branches: 'write')
+    user.access.level(:orders)
+    user.roles << create_role('Operator', 2, orders: 'write')
 
-    expect(user.reload.access.level(:branches)).to eq(:write)
+    expect(user.reload.access.level(:orders)).to eq(:write)
   end
 end
