@@ -1,0 +1,57 @@
+ActiveAdmin.register Pundit::Matrix::Role, as: 'Role', namespace: :<%= namespace %> do
+  config.sort_order = 'position_asc'
+
+  permit_params do
+    role_policy.permitted_attributes
+  end
+
+  controller do
+    helper_method :role_policy
+
+    def role_policy
+      Pundit.policy!(current_active_admin_user, [:<%= namespace %>, Pundit::Matrix::Role])
+    end
+  end
+
+  filter :name
+  filter :admin
+
+  sidebar :superadmin, only: :index, if: -> { !<%= subject_name %>.active_superadmins.exists? } do
+    render 'pundit/matrix/superadmin_warning', subjects: <%= subject_name %>
+  end
+
+  index do
+    column :name
+    column :position
+    column :admin
+    actions
+  end
+
+  show do
+    attributes_table do
+      row :name
+      row :position
+      row :admin
+    end
+
+    panel Pundit::Matrix::Role.human_attribute_name(:permissions) do
+      render 'pundit/matrix/levels', role: resource, table_class: 'index_table'
+    end
+  end
+
+  form do |f|
+    f.semantic_errors(*f.object.errors.attribute_names)
+
+    f.inputs do
+      f.input :name
+      f.input :position
+      f.input :admin if role_policy.permitted_attributes.include?(:admin)
+    end
+
+    f.inputs Pundit::Matrix::Role.human_attribute_name(:permissions) do
+      li { render 'pundit/matrix/levels_fields', role: f.object, table_class: 'index_table' }
+    end
+
+    f.actions
+  end
+end

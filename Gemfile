@@ -6,6 +6,8 @@ gemspec
 gem 'irb'
 gem 'rake', '~> 13.0'
 
+gem 'activeadmin', '~> 3.5'
+
 gem 'rspec', '~> 3.0'
 gem 'rspec-rails'
 gem 'simplecov', require: false

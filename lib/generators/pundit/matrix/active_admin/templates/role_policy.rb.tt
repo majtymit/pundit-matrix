@@ -1,0 +1,6 @@
+module <%= namespace.camelize %>
+  # ActiveAdmin looks for this policy for Pundit::Matrix::Role (see Role.policy_class). The rules live in the gem;
+  # override actions here if needed.
+  class RolePolicy < Pundit::Matrix::RolePolicy
+  end
+end

@@ -1,0 +1,8 @@
+module <%= namespace.camelize %>
+  module ActiveAdmin
+    # ActiveAdmin asks this policy about every page. A page declares its screen in register_page with
+    # `screen :key`, `admin_screen` or `open_screen`; a page that declares nothing is denied.
+    class PagePolicy < Pundit::Matrix::ActiveAdmin::PagePolicy
+    end
+  end
+end

@@ -8,6 +8,11 @@ ActiveRecord::Schema.define do
     t.boolean :superadmin, null: false, default: false
     t.datetime :deactivated_at
   end
+
+  create_table :widgets do |t|
+    t.string :name, null: false
+    t.boolean :secret, null: false, default: false
+  end
 end
 
 template = File.expand_path('../../lib/generators/pundit/matrix/install/templates/create_pundit_matrix_tables.rb.tt',

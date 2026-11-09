@@ -1,3 +1,6 @@
 eval_gemfile '../Gemfile'
 
 gem 'rails', '~> 7.2.0'
+
+# Rails before 8.1 passes quirks_mode to JSON.generate, which json 3 no longer takes.
+gem 'json', '< 3'
