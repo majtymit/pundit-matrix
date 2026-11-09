@@ -57,4 +57,11 @@ RSpec.describe Pundit::Matrix::Permission do
     expect(permission).not_to be_valid
     expect(permission.errors[:role]).to eq(['has every permission already'])
   end
+
+  it 'lets the host extend it through a load hook' do
+    hooked = nil
+    ActiveSupport.on_load(:pundit_matrix_permission) { hooked = self }
+
+    expect(hooked).to eq(described_class)
+  end
 end

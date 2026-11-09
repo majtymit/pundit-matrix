@@ -134,4 +134,23 @@ RSpec.describe Pundit::Matrix::Role do
       expect(role.levels).to eq(orders: :read)
     end
   end
+
+  it 'lets an admin filter roles by their own columns only' do
+    expect(described_class.ransackable_attributes).to contain_exactly(
+      'id',
+      'name',
+      'position',
+      'admin',
+      'created_at',
+      'updated_at'
+    )
+    expect(described_class.ransackable_associations).to be_empty
+  end
+
+  it 'lets the host extend it through a load hook' do
+    hooked = nil
+    ActiveSupport.on_load(:pundit_matrix_role) { hooked = self }
+
+    expect(hooked).to eq(described_class)
+  end
 end

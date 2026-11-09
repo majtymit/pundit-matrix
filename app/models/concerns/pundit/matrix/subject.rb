@@ -5,7 +5,9 @@ module Pundit
 
       included do
         has_many :role_assignments, as: :subject, class_name: 'Pundit::Matrix::RoleAssignment', dependent: :delete_all
-        has_many :roles, through: :role_assignments, class_name: 'Pundit::Matrix::Role'
+        # dependent: :destroy makes `role_ids=` destroy the assignments it drops instead of deleting them past
+        # their callbacks, where the host's audit hooks in.
+        has_many :roles, through: :role_assignments, class_name: 'Pundit::Matrix::Role', dependent: :destroy
 
         around_save :keep_an_active_superadmin
         before_destroy :keep_an_active_superadmin_on_destroy, prepend: true

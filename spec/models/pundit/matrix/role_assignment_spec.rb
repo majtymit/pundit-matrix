@@ -13,4 +13,16 @@ RSpec.describe Pundit::Matrix::RoleAssignment do
 
     expect(described_class.new(role:, subject: user)).not_to be_valid
   end
+
+  it 'lets an admin filter subjects by role only' do
+    expect(described_class.ransackable_attributes).to eq(['role_id'])
+    expect(described_class.ransackable_associations).to be_empty
+  end
+
+  it 'lets the host extend it through a load hook' do
+    hooked = nil
+    ActiveSupport.on_load(:pundit_matrix_role_assignment) { hooked = self }
+
+    expect(hooked).to eq(described_class)
+  end
 end

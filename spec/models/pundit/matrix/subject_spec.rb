@@ -11,6 +11,18 @@ RSpec.describe Pundit::Matrix::Subject do
     expect(user.reload.roles).to eq([role])
   end
 
+  it 'runs the callbacks of the assignments it drops, so the host can audit them' do
+    kept = Pundit::Matrix::Role.create!(name: 'Operator', position: 1)
+    dropped = Pundit::Matrix::Role.create!(name: 'Analyst', position: 2)
+    user = create_user('a@example.com')
+    user.update!(role_ids: [kept.id, dropped.id])
+    DestroyedAssignments.role_ids.clear
+
+    user.update!(role_ids: [kept.id])
+
+    expect(DestroyedAssignments.role_ids).to eq([dropped.id])
+  end
+
   it 'removes role assignments together with the subject' do
     user = create_user('a@example.com')
     user.roles << Pundit::Matrix::Role.create!(name: 'Operator', position: 1)

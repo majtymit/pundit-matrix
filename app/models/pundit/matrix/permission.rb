@@ -22,6 +22,8 @@ module Pundit
       def role_not_admin
         add_error(:role, :admin_role) if role&.admin?
       end
+
+      ActiveSupport.run_load_hooks(:pundit_matrix_permission, self)
     end
   end
 end

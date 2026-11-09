@@ -13,6 +13,14 @@ module Pundit
       scope :admins, -> { where(admin: true) }
       scope :ordinary, -> { where(admin: false) }
 
+      def self.ransackable_attributes(_auth_object = nil)
+        %w[id name position admin created_at updated_at]
+      end
+
+      def self.ransackable_associations(_auth_object = nil)
+        []
+      end
+
       def higher_than?(other)
         position < other.position
       end
@@ -50,6 +58,8 @@ module Pundit
       def other_roles
         self.class.where.not(id:)
       end
+
+      ActiveSupport.run_load_hooks(:pundit_matrix_role, self)
     end
   end
 end
