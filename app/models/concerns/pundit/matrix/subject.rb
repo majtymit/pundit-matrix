@@ -11,6 +11,8 @@ module Pundit
 
         around_save :keep_an_active_superadmin
         before_destroy :keep_an_active_superadmin_on_destroy, prepend: true
+        validate :role_change_allowed
+        validate :superadmin_change_allowed
       end
 
       def access
@@ -19,10 +21,56 @@ module Pundit
 
       def reload(*)
         @access = nil
+        @role_change_errors = nil
         super
       end
 
+      def role_ids=(ids)
+        Current.actor ? self.roles = Role.find(Array(ids).compact_blank) : super
+      end
+
+      # Held roles the actor cannot assign are kept, because a form shows them disabled and does not send them.
+      def roles=(roles)
+        actor = acting_subject
+        if actor
+          roles = roles.to_a | self.roles.reject { |role| actor.access.assign?(role) }
+          @role_change_errors = role_change_errors(actor, roles)
+          super(roles) if @role_change_errors.empty?
+        else
+          super
+        end
+      end
+
       private
+
+      def role_change_errors(actor, roles)
+        added = roles - self.roles
+        return [] if added.empty? && (self.roles - roles).empty?
+        return [[:base, actor == self ? :own_roles : :roles_not_managed]] unless actor.access.manage?(self)
+
+        added.reject { |role| actor.access.assign?(role) }.map { |role| [:roles, :role_not_assignable, role.name] }
+      end
+
+      def role_change_allowed
+        @role_change_errors&.each do |attribute, type, role|
+          errors.add(attribute, type, message: Pundit::Matrix.t("errors.#{type}", role:))
+        end
+      end
+
+      def superadmin_change_allowed
+        return unless will_save_change_to_attribute?(:superadmin)
+
+        actor = acting_subject
+        return if actor.nil? || actor.access.superadmin?
+
+        errors.add(:superadmin, :superadmin_only, message: Pundit::Matrix.t('errors.superadmin_only'))
+      end
+
+      # Acting on itself, the subject must be judged by what is stored, not by the changes it is about to save.
+      def acting_subject
+        actor = Current.actor
+        actor.equal?(self) ? self.class.find(id) : actor
+      end
 
       def keep_an_active_superadmin
         was_active_superadmin = persisted? && active_superadmins.exists?(id)

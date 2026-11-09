@@ -13,3 +13,7 @@ en:
       level_not_offered: is not offered on this screen
       admin_role: has every permission already
       last_superadmin: At least one active superadmin must remain
+      roles_not_managed: Only someone with a higher role can change these roles
+      own_roles: Only a superadmin can change their own roles
+      role_not_assignable: include %{role}, which you cannot assign
+      superadmin_only: can be changed only by a superadmin
