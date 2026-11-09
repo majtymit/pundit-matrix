@@ -147,10 +147,25 @@ RSpec.describe Pundit::Matrix::Role do
     expect(described_class.ransackable_associations).to be_empty
   end
 
+  it 'hides every column from an actor who does not manage roles, as any of them would reveal role holders' do
+    operator = User.create!(email: 'operator@example.com')
+    operator.roles << described_class.create!(name: 'Operator', position: 2)
+
+    Pundit::Matrix::Current.set(actor: operator) { expect(described_class.ransackable_attributes).to be_empty }
+  end
+
   it 'lets the host extend it through a load hook' do
     hooked = nil
     ActiveSupport.on_load(:pundit_matrix_role) { hooked = self }
 
     expect(hooked).to eq(described_class)
+  end
+
+  it "leads Pundit to the host's RolePolicy, in any namespace" do
+    stub_const('RolePolicy', Class.new(Pundit::Matrix::RolePolicy))
+    stub_const('Admin::RolePolicy', Class.new(Pundit::Matrix::RolePolicy))
+
+    expect(Pundit::PolicyFinder.new(described_class).policy).to eq(RolePolicy)
+    expect(Pundit::PolicyFinder.new([:admin, described_class.new]).policy).to eq(Admin::RolePolicy)
   end
 end

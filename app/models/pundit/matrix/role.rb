@@ -14,11 +14,17 @@ module Pundit
       scope :ordinary, -> { where(admin: false) }
 
       def self.ransackable_attributes(_auth_object = nil)
-        %w[id name position admin created_at updated_at]
+        searchable_by_role? ? %w[id name position admin created_at updated_at] : []
       end
 
       def self.ransackable_associations(_auth_object = nil)
         []
+      end
+
+      # Pundit would look for Admin::Pundit::Matrix::RolePolicy in the admin namespace; this finds the host's
+      # Admin::RolePolicy and RolePolicy instead.
+      def self.policy_class
+        'RolePolicy'
       end
 
       def higher_than?(other)
