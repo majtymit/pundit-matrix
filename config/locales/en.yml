@@ -1,6 +1,7 @@
 en:
   pundit_matrix:
     admin_role: An admin role has every permission, including screens added later.
+    admin_role_name: Admin
     no_superadmin: Nobody is an active superadmin yet. Until someone is, nobody can manage admin roles.
     levels:
       none: No access

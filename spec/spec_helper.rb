@@ -10,6 +10,7 @@ end
 
 require_relative 'dummy/config/environment'
 require 'rspec/rails'
+require 'pundit/matrix/rspec'
 
 Dir[File.join(__dir__, 'support/**/*.rb')].each { |file| require file }
 

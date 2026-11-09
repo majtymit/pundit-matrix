@@ -143,7 +143,7 @@ RSpec.describe Pundit::Matrix::Policy do
       admin = User.create!(email: 'admin@example.com')
       admin.roles << Pundit::Matrix::Role.create!(name: 'Admin', position: 1, admin: true)
       superadmin = User.create!(email: 'super@example.com', superadmin: true)
-      user.roles << Pundit::Matrix::Role.create!(name: 'Writer', position: 2, levels: { orders: 'write' })
+      grant_levels(user, orders: :write)
 
       [admin, superadmin].each do |subject|
         policy = trail_policy.new(subject, :version)

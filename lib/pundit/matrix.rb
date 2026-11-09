@@ -37,6 +37,21 @@ module Pundit
       def t(key, **)
         I18n.t("pundit_matrix.#{key}", **, default: I18n.t("pundit_matrix.#{key}", **, locale: :en))
       end
+
+      # Set up by an operator, not by anyone signed in, so it runs with no actor whatever request it is called from.
+      def setup_superadmin!(subject)
+        Current.set do
+          Role.transaction do
+            role = admin_role!
+            subject.update!(superadmin: true, role_ids: subject.role_ids | [role.id])
+            role
+          end
+        end
+      end
+
+      def admin_role!
+        Role.admins.ordered.first || Role.create!(name: t('admin_role_name'), position: 1, admin: true)
+      end
     end
   end
 end
