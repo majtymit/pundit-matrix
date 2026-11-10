@@ -17,8 +17,8 @@ RSpec.describe Pundit::Matrix::RolePolicy do
     expect(allowed(superadmin, operator_role)).to eq(every_action)
   end
 
-  it 'lets a superadmin rename the admin role, but never delete or move it' do
-    expect(allowed(superadmin, admin_role)).to eq(%i[index? show? new? create? edit? update?])
+  it 'lets nobody edit, delete or move the admin role, not even a superadmin' do
+    expect(allowed(superadmin, admin_role)).to eq(%i[index? show? new? create?])
   end
 
   it 'lets an admin manage and move ordinary roles' do

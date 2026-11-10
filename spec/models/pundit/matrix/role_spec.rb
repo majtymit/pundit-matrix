@@ -141,6 +141,26 @@ RSpec.describe Pundit::Matrix::Role do
     end
   end
 
+  describe 'holders' do
+    it 'lists the subjects holding the role' do
+      operator, manager = create_roles('Operator', 'Manager')
+      luke = User.create!(email: 'luke@example.com', roles: [operator])
+      leia = User.create!(email: 'leia@example.com', roles: [operator, manager])
+
+      expect(operator.holders).to contain_exactly(luke, leia)
+      expect(manager.holders).to eq([leia])
+    end
+
+    it 'counts the holders of several roles at once' do
+      operator, manager, analyst = create_roles('Operator', 'Manager', 'Analyst')
+      User.create!(email: 'luke@example.com', roles: [operator])
+      User.create!(email: 'leia@example.com', roles: [operator, manager])
+
+      expect(described_class.holder_counts(described_class.where(id: [operator.id, analyst.id])))
+        .to eq(operator.id => 2)
+    end
+  end
+
   it 'cannot be deleted while a subject holds it' do
     role, = create_roles('Operator')
     role.role_assignments.create!(subject: User.create!(email: 'a@example.com'))

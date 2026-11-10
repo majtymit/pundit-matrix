@@ -5,8 +5,15 @@ ActiveAdmin.register Pundit::Matrix::Role, as: 'Role', namespace: :<%= namespace
     role_policy.permitted_attributes
   end
 
+  # ActiveAdmin names the roles crumb after activerecord.models.role, which the namespaced model does not answer.
+  breadcrumb do
+    breadcrumb_links.tap do |links|
+      links[1] = link_to(Pundit::Matrix::Role.model_name.human(count: 2), collection_path) if links[1]
+    end
+  end
+
   controller do
-    helper_method :role_policy, :role_order_shown?
+    helper_method :role_policy, :role_order_shown?, :holders_shown?, :holder_counts
 
     def role_policy
       Pundit.policy!(current_active_admin_user, [:<%= namespace %>, Pundit::Matrix::Role])
@@ -15,6 +22,14 @@ ActiveAdmin.register Pundit::Matrix::Role, as: 'Role', namespace: :<%= namespace
     # Moving a role in a filtered or reordered list would pass neighbours the list does not show.
     def role_order_shown?
       params[:q].blank? && params.fetch(:order, 'position_asc') == 'position_asc'
+    end
+
+    def holders_shown?
+      current_active_admin_user.access.everything?
+    end
+
+    def holder_counts
+      @holder_counts ||= Pundit::Matrix::Role.holder_counts(collection)
     end
   end
 
@@ -47,6 +62,7 @@ ActiveAdmin.register Pundit::Matrix::Role, as: 'Role', namespace: :<%= namespace
         end
       end
     end
+    column(Pundit::Matrix.t('holders')) { |role| holder_counts.fetch(role.id, 0) } if holders_shown?
     actions
   end
 
@@ -58,6 +74,17 @@ ActiveAdmin.register Pundit::Matrix::Role, as: 'Role', namespace: :<%= namespace
 
     panel Pundit::Matrix::Role.human_attribute_name(:permissions) do
       render 'pundit/matrix/levels', role: resource, table_class: 'index_table'
+    end
+
+    if holders_shown?
+      panel Pundit::Matrix.t('holders') do
+        holders = resource.holders.sort_by { |holder| display_name(holder) }
+        if holders.any?
+          ul { holders.each { |holder| li auto_link(holder) } }
+        else
+          para Pundit::Matrix.t('no_holders')
+        end
+      end
     end
   end
 

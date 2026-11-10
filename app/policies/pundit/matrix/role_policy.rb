@@ -28,8 +28,9 @@ module Pundit
         create?
       end
 
+      # The admin role has a fixed position and every permission, so there is nothing left to edit.
       def update?
-        manager? && (superadmin? || !record.admin?)
+        manager? && !record.admin?
       end
 
       def edit?
@@ -37,15 +38,15 @@ module Pundit
       end
 
       def destroy?
-        ordinary_role_manager?
+        update?
       end
 
       def move_up?
-        ordinary_role_manager?
+        update?
       end
 
       def move_down?
-        ordinary_role_manager?
+        update?
       end
 
       def permitted_attributes
@@ -67,14 +68,6 @@ module Pundit
 
       def manager?
         user.present? && user.access.everything?
-      end
-
-      def ordinary_role_manager?
-        manager? && !record.admin?
-      end
-
-      def superadmin?
-        user.present? && user.access.superadmin?
       end
     end
   end

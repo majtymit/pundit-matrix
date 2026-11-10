@@ -191,9 +191,85 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
 
       as(admin, :get, "/admin/roles/#{manager.id}/edit")
       expect(page.at_css('#role_position')).to have_attributes(to_h: include('value' => '3', 'disabled' => 'disabled'))
+    end
 
-      as(superadmin, :get, "/admin/roles/#{Pundit::Matrix::Role.admin_role.id}/edit")
-      expect(page.at_css('#role_position')).to have_attributes(to_h: include('value' => '1', 'disabled' => 'disabled'))
+    it 'offers no edit of the admin role, not even to a superadmin' do
+      admin_role = Pundit::Matrix::Role.admin_role
+
+      as(superadmin, :get, '/admin/roles')
+      expect(page.css('a.edit_link').map { |link| link['href'] })
+        .to contain_exactly("/admin/roles/#{operator.id}/edit", "/admin/roles/#{manager.id}/edit")
+
+      as(superadmin, :get, "/admin/roles/#{admin_role.id}")
+      expect(page.css('.action_items a').map(&:text)).to be_empty
+
+      as(superadmin, :patch, "/admin/roles/#{admin_role.id}", params: { role: { name: 'Boss' } })
+      expect(admin_role.reload.name).to eq('Admin')
+    end
+
+    it 'names the roles in the breadcrumb after the model' do
+      allow(Pundit::Matrix::Role.model_name).to receive(:human).and_call_original
+      allow(Pundit::Matrix::Role.model_name).to receive(:human).with(count: 2).and_return('Roly')
+
+      as(admin, :get, "/admin/roles/#{manager.id}/edit")
+
+      expect(page.css('.breadcrumb a').map { |link| [link.text, link['href']] })
+        .to eq([['Admin', '/admin'], ['Roly', '/admin/roles'], ['Manager', "/admin/roles/#{manager.id}"]])
+    end
+
+    describe 'who holds a role' do
+      let!(:luke) { User.create!(email: 'luke@example.com', roles: [manager]) }
+
+      before { make_superadmin(User.create!(email: 'yoda@example.com')) }
+
+      it 'counts the holders of every role on the index in one query' do
+        User.create!(email: 'leia@example.com', roles: [manager, operator])
+        admin
+        counts = []
+        subscriber = ActiveSupport::Notifications.subscribe('sql.active_record') do |*, payload|
+          counts << payload[:sql] if payload[:sql].match?(/COUNT.*FROM "role_assignments"/)
+        end
+
+        as(admin, :get, '/admin/roles')
+
+        ActiveSupport::Notifications.unsubscribe(subscriber)
+        shown = page.css('tbody tr').to_h { |row| [row.at_css('.col-name').text, row.at_css('.col-held_by').text] }
+        expect(shown).to eq('Admin' => '2', 'Operator' => '1', 'Manager' => '2')
+        expect(counts.size).to eq(1)
+      end
+
+      it 'lists the holders on the detail, linking to those the actor may open' do
+        as(admin, :get, "/admin/roles/#{Pundit::Matrix::Role.admin_role.id}")
+
+        expect(page.css('.panel li').map { |item| [item.text, item.at_css('a')&.[]('href')] })
+          .to eq([['admin@example.com', nil], ['yoda@example.com', nil]])
+
+        as(admin, :get, "/admin/roles/#{manager.id}")
+
+        expect(page.css('.panel li').map { |item| [item.text, item.at_css('a')&.[]('href')] })
+          .to eq([['luke@example.com', "/admin/users/#{luke.id}"]])
+      end
+
+      it 'lists them only to whoever sees who holds what, even when the app opens a role wider' do
+        open_policy = Class.new(Pundit::Matrix::RolePolicy) do
+          def index? = true
+          def show? = true
+        end
+        open_policy.const_set(:Scope, Class.new(Pundit::Matrix::RolePolicy::Scope) { def resolve = @scope.all })
+        stub_const('Admin::RolePolicy', open_policy)
+        reader = subject_with(widgets: :read)
+
+        as(reader, :get, "/admin/roles/#{manager.id}")
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include('luke@example.com', 'Held by')
+      end
+
+      it 'says when nobody holds a role' do
+        as(admin, :get, "/admin/roles/#{operator.id}")
+
+        expect(response.body).to include('Nobody holds this role.')
+      end
     end
 
     it 'ignores a position sent anyway' do
