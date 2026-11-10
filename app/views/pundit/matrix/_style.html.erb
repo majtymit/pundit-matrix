@@ -3,12 +3,10 @@
   .pundit-matrix { border-collapse: collapse; }
   .pundit-matrix th, .pundit-matrix td { padding: 0.5em 0.75em; }
   <%# Only the form: on the detail the admin's attributes table draws its own rows. %>
-  .pundit-matrix-levels .pundit-matrix thead th, .pundit-matrix-levels .pundit-matrix td {
-    border-bottom: 1px solid rgba(127, 127, 127, 0.25);
-  }
+  .pundit-matrix-levels .pundit-matrix td { border-bottom: 1px solid rgba(127, 127, 127, 0.25); }
   .pundit-matrix thead th { background: none; }
   .pundit-matrix th[scope="rowgroup"] {
-    padding-top: 1.75em; text-align: left; font-weight: bold; font-size: 1em; text-transform: none;
+    padding-top: 1.75em; text-align: left; font-weight: bold; font-size: 1.15em; text-transform: none;
   }
   .pundit-matrix .pundit-matrix-level { width: 20%; text-align: center; }
   <%# The width of ActiveAdmin's text inputs, so the matrix lines up with the fields above it. %>

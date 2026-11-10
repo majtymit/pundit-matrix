@@ -3,6 +3,26 @@ Pundit::Matrix.configure do |config|
   config.table_prefix = '<%= table_prefix %>'
 
 <% end -%>
+  # Every screen of the app, by the key its policy or page declares with `screen :key`, and whether it is
+  # read-only. A new screen is closed for every ordinary role until someone opens it in the matrix.
   config.screens do
+    screen :<%= subject_key %>
+
+    # screen :posts
+    # screen :orders
+    # screen :reports, read_only: true
+<% if active_admin? -%>
+
+    # The matrix takes groups, their order and the labels from the ActiveAdmin menu. A group declared here wins:
+    # group :sales do
+    #   screen :invoices
+    # end
+<% else -%>
+
+    # Groups only arrange the matrix:
+    # group :sales do
+    #   screen :invoices
+    # end
+<% end -%>
   end
 end

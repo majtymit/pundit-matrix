@@ -2,6 +2,7 @@ require 'pundit'
 require_relative 'matrix/version'
 require_relative 'matrix/screen'
 require_relative 'matrix/screens'
+require_relative 'matrix/layout'
 require_relative 'matrix/configuration'
 require_relative 'matrix/model'
 require_relative 'matrix/policy'
@@ -22,6 +23,9 @@ module Pundit
     class << self
       delegate :screens, to: :config
 
+      # Set by an admin adapter: the places its menu gives the screens, for a view rendered inside that admin.
+      attr_writer :screen_places
+
       def config
         @config ||= Configuration.new
       end
@@ -32,6 +36,10 @@ module Pundit
 
       def table_name_prefix
         config.table_prefix
+      end
+
+      def layout(view)
+        Layout.new(@screen_places&.call(view) || {})
       end
 
       def t(key, **)

@@ -22,7 +22,7 @@ RSpec.describe 'pundit/matrix/_style' do
     style = render_partial('levels').at_css('style').text
     lined = style.scan(/([^{}]+)\{[^{}]*border-bottom/).flatten.join.split(',').map(&:strip)
 
-    expect(lined).to eq(['.pundit-matrix-levels .pundit-matrix thead th', '.pundit-matrix-levels .pundit-matrix td'])
+    expect(lined).to eq(['.pundit-matrix-levels .pundit-matrix td'])
   end
 
   it 'lines the form matrix up with the text inputs and gives each level a fixed share' do

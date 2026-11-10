@@ -32,15 +32,6 @@ module Pundit
         @screens.each_value(&)
       end
 
-      # Without any group there is no heading at all; once there is one, ungrouped screens get a heading too, so they
-      # do not read as part of the group above them.
-      def by_group
-        groups = group_by(&:group)
-        return [[nil, to_a]] if groups.keys == [nil]
-
-        groups.map { |_group, screens| [screens.first.group_label, screens] }
-      end
-
       def fetch(key)
         @screens.fetch(key.to_sym) { raise UnknownScreenError, "Screen #{key.inspect} is not declared" }
       end

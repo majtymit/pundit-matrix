@@ -245,6 +245,18 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
       expect(matrix.at_css('table')['class']).to eq('pundit-matrix')
     end
 
+    it 'arranges the matrix by the admin menu: its groups, their order and the labels of its items' do
+      as(admin, :get, "/admin/roles/#{manager.id}/edit")
+
+      table = page.at_css('li.pundit-matrix-levels table')
+      expect(table.css('th[scope=rowgroup]').map(&:text)).to eq(%w[General Access])
+      expect(table.css('tbody tr td:first-child').map(&:text)).to eq(%w[Reports Gadgets Users])
+
+      as(admin, :get, "/admin/roles/#{manager.id}")
+
+      expect(page.css('table.pundit-matrix th[scope=row]').map(&:text)).to eq(%w[Reports Gadgets Users])
+    end
+
     it 'shows the admin role like any other, with the levels it really has' do
       as(admin, :get, "/admin/roles/#{Pundit::Matrix::Role.admin_role.id}")
 

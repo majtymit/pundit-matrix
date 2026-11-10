@@ -26,4 +26,10 @@ ActiveAdmin.setup do |config|
   config.comments = false
   config.batch_actions = false
   config.on_unauthorized_access = :pundit_matrix_access_denied
+
+  config.namespace :admin do |admin|
+    admin.build_menu do |menu|
+      menu.add id: 'access', label: proc { safe_join([tag.i(class: 'icon'), 'Access'], ' ') }, priority: 3
+    end
+  end
 end

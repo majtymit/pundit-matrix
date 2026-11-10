@@ -13,20 +13,21 @@
         <% end %>
       </tr>
     </thead>
-    <% Pundit::Matrix.screens.by_group.each do |group_label, screens| %>
+    <% Pundit::Matrix.layout(self).groups.each do |group| %>
       <tbody>
-        <% if group_label %>
-          <tr><th scope="rowgroup" colspan="<%= Pundit::Matrix::LEVELS.size + 1 %>"><%= group_label %></th></tr>
+        <% if group.label %>
+          <tr><th scope="rowgroup" colspan="<%= Pundit::Matrix::LEVELS.size + 1 %>"><%= group.label %></th></tr>
         <% end %>
-        <% screens.each do |screen| %>
+        <% group.rows.each do |row| %>
+          <% screen = row.screen %>
           <% current = role.levels.fetch(screen.key, :none) %>
           <tr>
-            <td><%= screen.label %></td>
+            <td><%= row.label %></td>
             <% Pundit::Matrix::LEVELS.each do |level| %>
               <td class="pundit-matrix-level">
                 <% if screen.levels.include?(level) %>
                   <%= radio_button_tag "#{scope}[levels][#{screen.key}]", level, current == level,
-                                       'aria-label': "#{screen.label}: #{Pundit::Matrix.t("levels.#{level}")}" %>
+                                       'aria-label': "#{row.label}: #{Pundit::Matrix.t("levels.#{level}")}" %>
                 <% end %>
               </td>
             <% end %>

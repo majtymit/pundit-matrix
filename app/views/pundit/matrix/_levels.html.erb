@@ -1,15 +1,15 @@
 <% table_class = local_assigns[:table_class] %>
 <%= render 'pundit/matrix/style' %>
 <table class="<%= class_names('pundit-matrix', table_class) %>">
-  <% Pundit::Matrix.screens.by_group.each do |group_label, screens| %>
+  <% Pundit::Matrix.layout(self).groups.each do |group| %>
     <tbody>
-      <% if group_label %>
-        <tr><th scope="rowgroup" colspan="2"><%= group_label %></th></tr>
+      <% if group.label %>
+        <tr><th scope="rowgroup" colspan="2"><%= group.label %></th></tr>
       <% end %>
-      <% screens.each do |screen| %>
-        <% level = role.level(screen) %>
+      <% group.rows.each do |row| %>
+        <% level = role.level(row.screen) %>
         <tr>
-          <th scope="row"><%= screen.label %></th>
+          <th scope="row"><%= row.label %></th>
           <td class="pundit-matrix-<%= level %>">
             <% if level == :none %>
               <span title="<%= Pundit::Matrix.t('levels.none') %>">–</span>

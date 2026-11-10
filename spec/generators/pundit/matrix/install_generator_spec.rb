@@ -47,6 +47,19 @@ RSpec.describe Pundit::Matrix::InstallGenerator do
     expect(output.scan('Next:').size).to eq(1)
   end
 
+  it 'declares the screen of the subject and shows how to declare the others' do
+    stub_const('Account', Class.new(ApplicationRecord) { self.table_name = 'users' })
+    File.write(File.join(root, 'app/models/account.rb'), "class Account < ApplicationRecord\nend\n")
+    run_generator('Account', '--table-prefix=matrix_')
+
+    initializer = read('config/initializers/pundit_matrix.rb')
+    expect { RubyVM::InstructionSequence.compile(initializer) }.not_to raise_error
+    expect(initializer).to include("  config.screens do\n    screen :accounts\n")
+    expect(initializer).to include('# screen :posts', '# screen :orders', '# screen :reports, read_only: true')
+    expect(initializer).to include('#   screen :invoices')
+    expect(initializer).to include('from the ActiveAdmin menu')
+  end
+
   it 'creates the admin role at position 1 in the migration, and no admin flag' do
     run_generator('User', '--table-prefix=matrix_')
 
@@ -79,6 +92,8 @@ RSpec.describe Pundit::Matrix::InstallGenerator do
 
     it 'creates the role policy Pundit finds for roles' do
       run_generator('User', '--table-prefix=matrix_')
+
+      expect(read('config/initializers/pundit_matrix.rb')).to include('Groups only arrange the matrix')
 
       expect(File.exist?(File.join(root, 'app/admin/roles.rb'))).to be(false)
       expect(read('app/policies/role_policy.rb')).to include('class RolePolicy < Pundit::Matrix::RolePolicy')

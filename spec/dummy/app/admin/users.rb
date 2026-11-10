@@ -1,5 +1,6 @@
 ActiveAdmin.register User do
   matrix_subject
+  menu parent: 'access', priority: 2
 
   permit_params :email
 

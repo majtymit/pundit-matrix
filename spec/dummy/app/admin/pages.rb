@@ -6,6 +6,7 @@ end
 
 ActiveAdmin.register_page 'Reports' do
   screen :reports
+  menu priority: 1
 
   content { para 'Reports' }
 end

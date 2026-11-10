@@ -10,10 +10,6 @@ module Pundit
       def label
         I18n.t("pundit_matrix.screens.#{key}", default: key.to_s.humanize)
       end
-
-      def group_label
-        group ? I18n.t("pundit_matrix.groups.#{group}", default: group.to_s.humanize) : Pundit::Matrix.t('ungrouped')
-      end
     end
   end
 end
