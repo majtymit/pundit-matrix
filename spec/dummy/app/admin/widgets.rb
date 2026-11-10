@@ -3,6 +3,8 @@ ActiveAdmin.register Widget do
 
   permit_params :name
 
+  filter :name
+
   member_action :publish, method: :put do
     redirect_to admin_widget_path(resource)
   end

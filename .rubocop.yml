@@ -54,7 +54,8 @@ Naming/PredicatePrefix:
 RSpec/MultipleMemoizedHelpers:
   Enabled: false
 
-# ActiveAdmin registrations are DSL blocks as long as the screen they describe.
+# ActiveAdmin registrations and shared examples are DSL blocks as long as the screen or the checks they describe.
 Metrics/BlockLength:
   AllowedMethods:
     - register
+    - shared_examples

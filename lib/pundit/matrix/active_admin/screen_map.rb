@@ -2,7 +2,7 @@ module Pundit
   module Matrix
     module ActiveAdmin
       # The screens of an ActiveAdmin namespace: where its menu places them, and whether their levels match what
-      # their registrations offer. The generated screens spec checks the second.
+      # their registrations offer. The screens examples check the second.
       class ScreenMap
         # `except` names the resources and pages the app keeps outside the matrix, as the screens spec lists them.
         def initialize(namespace, except: [])

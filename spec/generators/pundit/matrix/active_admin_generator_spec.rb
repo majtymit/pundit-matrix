@@ -159,13 +159,19 @@ RSpec.describe Pundit::Matrix::ActiveAdminGenerator do
 
       spec = read('spec/requests/admin/pundit_matrix_screens_spec.rb')
       expect_valid_ruby(spec)
-      expect(spec).to include('include Devise::Test::IntegrationHelpers')
-      expect(spec).to include('create(:user)')
-      expect(spec).to include('ActiveAdmin.application.namespaces[:admin]')
-      expect(spec).to include('expect(screen_map.conflicts).to be_empty')
-      expect(spec).to include('ScreenMap.new(namespace, except: outside_the_matrix)')
-      expect(spec).to include('expect(screen_map.level_mismatches(create_subject)).to be_empty')
-      expect(spec).not_to include('NotImplementedError')
+      expect(spec).to eq(<<~RUBY)
+        require 'rails_helper'
+        require 'pundit/matrix/rspec'
+
+        RSpec.describe 'Pundit::Matrix screens of admin', type: :request do
+          include Devise::Test::IntegrationHelpers
+
+          it_behaves_like 'Pundit::Matrix screens',
+                          namespace: :admin,
+                          except: %w[Comment],
+                          create_subject: -> { create(:user) }
+        end
+      RUBY
       expect(output).not_to include('Adjust `create_subject`')
     end
 
@@ -175,7 +181,14 @@ RSpec.describe Pundit::Matrix::ActiveAdminGenerator do
 
       run_generator
 
-      expect(read('spec/requests/admin/pundit_matrix_screens_spec.rb')).to include('password: SecureRandom.base58(24)')
+      spec = read('spec/requests/admin/pundit_matrix_screens_spec.rb')
+      expect_valid_ruby(spec)
+      expect(spec).to include(<<~RUBY)
+        create_subject: lambda {
+                            User.create!(email: "subject-\#{SecureRandom.hex(6)}@example.test",
+                                         password: SecureRandom.base58(24))
+                          }
+      RUBY
     end
 
     it 'leaves the sign in to the app without Devise' do
@@ -186,7 +199,7 @@ RSpec.describe Pundit::Matrix::ActiveAdminGenerator do
       spec = read('spec/requests/admin/pundit_matrix_screens_spec.rb')
       expect_valid_ruby(spec)
       expect(spec).to include("raise NotImplementedError, 'Sign the subject in the way your app does'")
-      expect(spec).to match(/User\.create!\(email: "subject-.+@example\.test"\)$/)
+      expect(spec).to match(/^ {20}User\.create!\(email: "subject-.+@example\.test"\)$/)
       expect(output).to include('Adjust `create_subject` and `sign_in`')
     end
   end
