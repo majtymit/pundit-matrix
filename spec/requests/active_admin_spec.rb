@@ -10,6 +10,56 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
     public_send(method, path, **options, headers: { 'X-User-Id' => user.id.to_s, **options.fetch(:headers, {}) })
   end
 
+  # A reload compiles the roles screen anew and coverage counts only the last compile, so the requests come after it.
+  describe 'the registration of the roles screen' do
+    let(:namespace) { ActiveAdmin.application.namespaces[:admin] }
+
+    before { ActiveAdmin.application.load! }
+
+    def reload
+      ActiveAdmin.application.unload!
+      ActiveAdmin.application.load!
+    end
+
+    def roles
+      namespace.resources.select { |resource| resource.try(:resource_class) == Pundit::Matrix::Role }
+    end
+
+    it 'is one screen named Role, in the menu where the app file reopening it puts it' do
+      expect(roles.map { |resource| resource.resource_name.to_s }).to eq(['Role'])
+      expect(roles.first.member_actions.map(&:name)).to eq(%i[move_up move_down])
+
+      as(admin, :get, '/admin/roles')
+
+      menu = Nokogiri::HTML(response.body).css('#tabs > li#access > ul > li > a')
+      expect(menu.map { |link| link['href'] }).to eq(%w[/admin/roles /admin/users])
+    end
+
+    it 'comes again before the app file on a reload' do
+      reload
+
+      expect(roles.size).to eq(1)
+      expect(roles.first.menu_item_options).to include(parent: 'access', priority: 1)
+      expect(roles.first.member_actions.map(&:name)).to eq(%i[move_up move_down])
+    end
+
+    context 'when the app registers its own' do
+      around do |example|
+        Pundit::Matrix.config.roles_screen = false
+        reload
+        example.run
+      ensure
+        Pundit::Matrix.config.roles_screen = true
+        reload
+      end
+
+      it 'leaves the screen to the app' do
+        expect(roles.size).to eq(1)
+        expect(roles.first.member_actions).to be_empty
+      end
+    end
+  end
+
   describe 'pages' do
     it 'opens a page meant for everyone signed in' do
       as(subject_with, :get, '/admin/dashboard')
@@ -191,7 +241,7 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
     end
   end
 
-  describe 'the generated roles screen' do
+  describe 'the roles screen' do
     let!(:operator) { Pundit::Matrix::Role.create!(name: 'Operator') }
     let!(:manager) { Pundit::Matrix::Role.create!(name: 'Manager') }
 

@@ -3,7 +3,6 @@ require 'erb'
 generated = Dir.mktmpdir('pundit-matrix-generated')
 templates = File.expand_path('../../../../lib/generators/pundit/matrix/active_admin/templates', __dir__)
 {
-  'roles.rb.tt' => 'admin/roles.rb',
   'role_policy.rb.tt' => 'policies/role_policy.rb',
   'page_policy.rb.tt' => 'policies/page_policy.rb',
 }.each do |template, path|
@@ -17,7 +16,6 @@ Rails.application.config.to_prepare do
 end
 
 ActiveAdmin.setup do |config|
-  config.load_paths = [Rails.root.join('app/admin').to_s, File.join(generated, 'admin')]
   config.authentication_method = false
   config.logout_link_path = false
   config.current_user_method = :current_user

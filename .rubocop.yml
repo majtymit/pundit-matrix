@@ -53,3 +53,8 @@ Naming/PredicatePrefix:
 
 RSpec/MultipleMemoizedHelpers:
   Enabled: false
+
+# ActiveAdmin registrations are DSL blocks as long as the screen they describe.
+Metrics/BlockLength:
+  AllowedMethods:
+    - register

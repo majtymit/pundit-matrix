@@ -28,23 +28,10 @@ RSpec.describe Pundit::Matrix::ActiveAdminGenerator do
     expect { RubyVM::InstructionSequence.compile(source) }.not_to raise_error
   end
 
-  it 'registers the roles screen in the admin namespace' do
+  it 'leaves the roles screen to the gem' do
     run_generator
 
-    resource = read('app/admin/roles.rb')
-    expect_valid_ruby(resource)
-    expect(resource).to include("ActiveAdmin.register Pundit::Matrix::Role, as: 'Role', namespace: :admin do")
-    expect(resource).to include("render 'pundit/matrix/superadmin_warning', subjects: User")
-  end
-
-  it 'lets the roles screen move roles and keeps their positions out of reach' do
-    run_generator
-
-    resource = read('app/admin/roles.rb')
-    expect(resource).to include('member_action :move_up, method: :put do', 'member_action :move_down, method: :put do')
-    expect(resource).to include('move_up_admin_role_path(role)', 'move_down_admin_role_path(role)')
-    expect(resource).to include('f.input :position, input_html: { disabled: true }')
-    expect(resource).not_to include('filter :admin', 'column :admin', 'row :admin', 'input :admin')
+    expect(File.exist?(File.join(root, 'app/admin/roles.rb'))).to be(false)
   end
 
   it 'creates the role policy and the page policy ActiveAdmin looks for' do
@@ -152,8 +139,6 @@ RSpec.describe Pundit::Matrix::ActiveAdminGenerator do
   it 'takes another namespace and subject' do
     output = run_generator('Account', '--namespace=backoffice')
 
-    expect(read('app/admin/roles.rb')).to include('namespace: :backoffice do')
-    expect(read('app/admin/roles.rb')).to include('subjects: Account')
     expect(read('app/policies/backoffice/role_policy.rb')).to include("module Backoffice\n")
     expect(read('app/policies/backoffice/active_admin/page_policy.rb')).to include("module Backoffice\n")
     expect(output).to include('Backoffice::AccountPolicy')

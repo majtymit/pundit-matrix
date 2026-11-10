@@ -1,10 +1,11 @@
 module Pundit
   module Matrix
     class Configuration
-      attr_accessor :table_prefix
+      attr_accessor :table_prefix, :roles_screen
 
       def initialize
         @table_prefix = ''
+        @roles_screen = true
         @screens = Screens.new
       end
 

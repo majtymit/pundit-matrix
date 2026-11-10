@@ -72,7 +72,7 @@ RSpec.describe Pundit::Matrix::InstallGenerator do
     it 'sets it up and leaves out the role policy outside the namespace, which nothing would use' do
       run_generator('User', '--table-prefix=matrix_')
 
-      expect(File.exist?(File.join(root, 'app/admin/roles.rb'))).to be(true)
+      expect(File.exist?(File.join(root, 'app/policies/admin/role_policy.rb'))).to be(true)
       expect(File.exist?(File.join(root, 'app/policies/role_policy.rb'))).to be(false)
     end
 

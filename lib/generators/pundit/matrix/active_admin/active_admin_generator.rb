@@ -15,10 +15,6 @@ module Pundit
       class_option :namespace, type: :string, default: 'admin', desc: 'ActiveAdmin and policy namespace'
       class_option :next_steps, type: :boolean, default: true, hide: true
 
-      def create_resource
-        template 'roles.rb.tt', 'app/admin/roles.rb'
-      end
-
       def create_policies
         template 'role_policy.rb.tt', "app/policies/#{namespace}/role_policy.rb"
       end
