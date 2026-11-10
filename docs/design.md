@@ -15,7 +15,8 @@ change whose roles and gives the host app the answers.
 - **Screen** - one area of the host app, for example orders, invoices or reports. One screen is one permission.
 - **Level** - how much access a role has to a screen: `none`, `read` or `write`. `write` includes `read`.
 - **Role** - a named set of screen levels. Roles can share part of their permissions.
-- **Position** - a unique number on each role that orders all roles. Used to decide who can manage whom.
+- **Position** - a unique number on each role that orders all roles. Used to decide who can manage whom. The gem
+  assigns it; nobody types it.
 
 ## Screens
 
@@ -40,7 +41,7 @@ change whose roles and gives the host app the answers.
 | | Where it lives | Permissions | Can manage |
 |---|---|---|---|
 | **Superadmin** | the host's subject, read by the gem | everything | everyone, including itself and other superadmins |
-| **Admin** | `admin` flag on a role | everything, including screens added later | roles, the matrix, and subjects without an admin role |
+| **Admin** | the one admin role, at position 1 | everything, including screens added later | roles, the matrix, and subjects without the admin role |
 | **Ordinary role** | rows in the matrix | what the matrix says | subjects whose role is lower, if it has write on the subjects screen |
 
 ### Superadmin
@@ -48,7 +49,9 @@ change whose roles and gives the host app the answers.
 - Not a role. The host app owns it: the subject answers `superadmin?`, and `has_roles active_superadmins: -> { ... }`
   gives a scope of active superadmins (by default every subject with a `superadmin` flag). The gem only reads it.
   It never shows up in role lists, the matrix or role selects.
-- Typically a superadmin also holds an admin role. Removing superadmin leaves an ordinary admin.
+- Only a subject holding the admin role can be a superadmin. The subject concern refuses the flag without the role
+  and refuses taking the role from a superadmin; both change together in one save. Removing superadmin leaves an
+  ordinary admin.
 - A superadmin can change anything and anyone, including itself and other superadmins. Superadmins are trusted
   by definition.
 - Only a superadmin can make someone a superadmin or take it away.
@@ -59,39 +62,49 @@ change whose roles and gives the host app the answers.
   actually exists cannot be checked there (the developer's database is not production, and a fresh project has no
   subjects yet), so the gem gives a warning widget for the roles screen that shows while none exists.
   The app keeps working, so deploys and tests do not break.
-- The first superadmin and the admin role are made by `bin/rails pundit_matrix:superadmin EMAIL=...`, or by
-  `Pundit::Matrix.setup_superadmin!(subject)` from seeds, a console or a deploy script. Not data in a migration,
-  because a new database is loaded from the schema without it, and not seeds, because many apps never run them and
-  an app that adds the gem after its first deploy cannot. Both are idempotent and run with no actor.
+- The first superadmin is made by `bin/rails pundit_matrix:superadmin EMAIL=...`, or by
+  `Pundit::Matrix.setup_superadmin!(subject)` from seeds, a console or a deploy script. Not seeds, because many apps
+  never run them and an app that adds the gem after its first deploy cannot. Both are idempotent and run with no
+  actor.
 
 ### Admin
 
-- A role with the `admin` flag.
-- Only a superadmin can create a role with the flag, remove the flag, or assign an admin role.
+- Exactly one role, a fixed part of the gem: the role at position 1. There is no flag, so nobody can make another
+  role an admin role or stop this one being it. Position 1 is never given to a new role and never changes, so a
+  second admin role cannot exist.
+- Created by the install migration, so the roles screen has it right after migrating. A database loaded from the
+  schema has none, so the superadmin task and `make_admin` create it when it is missing.
+- Cannot be deleted by anyone, superadmins included, and never moves.
+- Only a superadmin renames it or assigns it.
 - Gets every permission automatically, including screens added later. It has no row in the matrix.
-- Is the only kind of role (besides superadmin) that can manage roles and the matrix. Roles are not a screen in the
-  matrix, so managing them cannot be granted to an ordinary role by mistake.
-- Admin roles are positioned above every ordinary role.
-- Cannot touch superadmins or subjects with an admin role, whatever the positions.
+- Is the only role (besides superadmin) that can manage roles and the matrix. Roles are not a screen in the matrix,
+  so managing them cannot be granted to an ordinary role by mistake.
+- Cannot touch superadmins or subjects with the admin role, whatever the positions.
 - Cannot change its own roles.
 
 ### Ordinary role
 
 - Permissions come only from the matrix.
-- Positioned below every admin role.
+- Positioned below the admin role, from 2 on.
 
 ## Roles and their assignments
 
 - Roles, their permissions and their assignments to subjects live in the gem's tables. A project that uses the gem
   has no roles of its own.
-- The tables have neutral names: `roles` (name, position, admin flag), `permissions` (role, screen key, level) and
+- The tables have neutral names: `roles` (name, position), `permissions` (role, screen key, level) and
   `role_assignments` (role, subject).
 - When one of them already exists, the install generator stops and offers `--table-prefix`. The prefix goes to
   the gem's configuration and its models read it. Names of individual tables are not configurable.
-- The project names each role, sets its permissions and its position. Positions are unique, so it is always clear
-  which of two roles is higher. Position 1 is the highest.
+- The project names each role and sets its permissions. Positions are unique, so it is always clear which of two
+  roles is higher. Position 1 is the highest.
+- Positions are never typed. A new role gets the next free one, and the order changes only by moving a role one
+  step up or down. A move renumbers the ordinary roles gapless in one transaction, through negative positions, so
+  the unique index never sees two roles on one position; deleting a role closes its gap the same way. The move is
+  a model API, so an app without ActiveAdmin wires its own buttons.
+- Move arrows show only on an unfiltered list ordered by position, because elsewhere a move would pass neighbours
+  nobody sees.
 - A role that is held by any subject cannot be deleted.
-- Changing a role's name, position or permissions is done on the roles screen (admins only).
+- Changing a role's name, order or permissions is done on the roles screen (admins only).
 - The host app calls `has_roles` in its subject model. That gives the subject its roles and the validations above.
 - The assignment table allows several roles per subject from the start. With more than one, all permissions from
   all roles apply: for each screen the highest level from any of them, and the subject's position is that of its
@@ -130,7 +143,7 @@ way, positions are explicit.
   themselves the flag or a role through their own record.
 - Who holds which role is visible to those who manage roles: admins and superadmins. While anyone else acts, Ransack
   allows no column of a role or of an assignment, so a subject list cannot be searched by role (by its id, name,
-  position or admin flag). A host shows its role filter only when `access.everything?`, because ActiveAdmin cannot
+  position). A host shows its role filter only when `access.everything?`, because ActiveAdmin cannot
   render a filter Ransack refuses. With no actor nothing is restricted.
 - The subject policy (`subject_screen`) adds `manage?` on the record to the screen levels: `show?` needs read,
   `update?` and `destroy?` need write. It gives the form `role_ids` for anyone who may edit and `superadmin` for a
@@ -163,8 +176,8 @@ matrix consistent with the positions is the job of whoever edits it, and only ad
 - The gem never asks who is signed in. Its policies get the subject from Pundit, and the rules on saving take it from
   `pundit_user`, so whatever the host passes there (`current_user`, `current_admin_user`) works without
   configuration.
-- The host's role policy inherits from `Pundit::Matrix::RolePolicy`: only admins and superadmins manage roles, only a
-  superadmin sets the admin flag. The role answers `policy_class` with `RolePolicy`, because Pundit would otherwise
+- The host's role policy inherits from `Pundit::Matrix::RolePolicy`: only admins and superadmins manage and move
+  ordinary roles, only a superadmin renames the admin role, nobody deletes it, and no one is permitted a position. The role answers `policy_class` with `RolePolicy`, because Pundit would otherwise
   look for `Admin::Pundit::Matrix::RolePolicy` in a namespace, and a module `Admin::Pundit` would hide `::Pundit`
   inside the host's admin code.
 - The matrix is a widget: `render 'pundit/matrix/levels_fields', role:` in the role form and

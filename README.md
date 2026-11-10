@@ -4,10 +4,10 @@ Roles and a permission matrix for Rails apps that authorize with [Pundit](https:
 
 Every screen of your app is one permission with three levels: no access, read and write. Roles get a level per screen, subjects (usually users) get roles, and your policies ask the matrix. There are no pages of its own: you manage roles in the admin you already have, and the matrix is a partial that takes its look.
 
-You create as many roles as you need, ordered by position. Access comes in three kinds:
+You create as many roles as you need; the gem keeps them in order. Access comes in three kinds:
 
-- **Superadmin** – a flag on the subject, not a role. Has everything and manages everyone, including other superadmins.
-- **Admin roles** – any role with the `admin` flag. Has every screen, including later ones, and manages roles and every subject below admin.
+- **Superadmin** – a flag on the subject, held only together with the admin role. Has everything and manages everyone, including other superadmins.
+- **The admin role** – one role, part of the gem, always first. Has every screen, including later ones, and manages roles and every subject below admin.
 - **Ordinary roles** – every other role. Has what the matrix says and manages only subjects with a lower role.
 
 Requires Ruby 3.2+, Rails 7.2+ and Pundit 2.3+.
@@ -21,7 +21,7 @@ bin/rails db:migrate
 bin/rails pundit_matrix:superadmin EMAIL=you@example.com
 ```
 
-The install generator creates the migration for the `roles`, `permissions` and `role_assignments` tables and an initializer, and adds `has_roles` to the model, below the comment that describes the class or after its last `include` or `extend`. It adds `extend Pundit::Matrix::Policy` to an existing `app/policies/application_policy.rb` and turns `screen` into `subject_screen` in an existing policy of the subject (or adds `subject_screen :users`); what it cannot find, it lists. Without ActiveAdmin it also creates `app/policies/role_policy.rb`, the policy Pundit finds for roles. When the model does not answer `superadmin?` yet, it also adds a migration with a boolean `superadmin` column. Primary keys follow your app's generator settings, so UUID apps get UUID tables. When one of the tables already exists, it stops and asks for `--table-prefix=matrix_`. When the app has ActiveAdmin, it also does what [the ActiveAdmin generator](#activeadmin) does, and prints one list of what is left, in the order you do it.
+The install generator creates the migration for the `roles`, `permissions` and `role_assignments` tables, which also creates the admin role, and an initializer, and adds `has_roles` to the model, below the comment that describes the class or after its last `include` or `extend`. It adds `extend Pundit::Matrix::Policy` to an existing `app/policies/application_policy.rb` and turns `screen` into `subject_screen` in an existing policy of the subject (or adds `subject_screen :users`); what it cannot find, it lists. Without ActiveAdmin it also creates `app/policies/role_policy.rb`, the policy Pundit finds for roles. When the model does not answer `superadmin?` yet, it also adds a migration with a boolean `superadmin` column. Primary keys follow your app's generator settings, so UUID apps get UUID tables. When one of the tables already exists, it stops and asks for `--table-prefix=matrix_`. When the app has ActiveAdmin, it also does what [the ActiveAdmin generator](#activeadmin) does, and prints one list of what is left, in the order you do it.
 
 The last command makes that subject a superadmin holding the admin role, see [Superadmin](#superadmin).
 
@@ -61,7 +61,9 @@ Once a superadmin exists, the last active one cannot lose the flag, be deactivat
 
 ### Superadmin
 
-`bin/rails pundit_matrix:superadmin EMAIL=you@example.com` finds the subject by its email (`MODEL=Account` for another model; an unknown email or model stops with a plain message), creates the admin role when there is none (the `admin` flag, position 1) and gives the subject the superadmin flag and that role. It is safe to run again, on any environment and at any time, also long after the first deploy.
+Superadmin is a flag on the subject, and only a subject holding the admin role can have it: setting the flag without the role fails, and so does taking the admin role from a superadmin. Give the role and the flag in one save, or take both away in one save.
+
+`bin/rails pundit_matrix:superadmin EMAIL=you@example.com` finds the subject by its email (`MODEL=Account` for another model; an unknown email or model stops with a plain message), creates the admin role when there is none (a database loaded from the schema has none) and gives the subject the superadmin flag and that role. It is safe to run again, on any environment and at any time, also long after the first deploy.
 
 From seeds, a console or a deploy script, call what the task calls:
 
@@ -89,7 +91,7 @@ Pundit::Matrix.configure do |config|
 end
 ```
 
-A read-only screen offers no access and read only. A new screen is closed for every ordinary role; admin roles and superadmins get it automatically.
+A read-only screen offers no access and read only. A new screen is closed for every ordinary role; the admin role and superadmins get it automatically.
 
 ## Policies
 
@@ -140,7 +142,26 @@ current_user.access.everything?  # an admin or a superadmin, who manages roles a
 
 ## Managing roles
 
-Roles are an ordinary model, `Pundit::Matrix::Role`, with `name`, `position` (unique, 1 is the highest) and `admin`. The ActiveAdmin generator builds the screen; in another admin, build it like any other resource. `Pundit::Matrix::RolePolicy` lets admins and superadmins manage ordinary roles and only superadmins touch admin roles and the `admin` flag. Pundit finds it through `RolePolicy` (or `Admin::RolePolicy` in a namespace), which the generators create, because the role answers `policy_class`. Permit what the policy allows: `permitted_attributes` gives `admin` to a superadmin only. A role held by a subject cannot be deleted.
+Roles are an ordinary model, `Pundit::Matrix::Role`, with `name` and `position` (unique, 1 is the highest). The ActiveAdmin generator builds the screen; in another admin, build it like any other resource. `Pundit::Matrix::RolePolicy` lets admins and superadmins manage and move ordinary roles, and only a superadmin renames the admin role. Pundit finds it through `RolePolicy` (or `Admin::RolePolicy` in a namespace), which the generators create, because the role answers `policy_class`. Permit what the policy allows: `permitted_attributes` gives `name` and `levels`, never `position`. A role held by a subject cannot be deleted.
+
+### The admin role
+
+The role at position 1 is the admin role, `Pundit::Matrix::Role.admin_role`, and nothing else marks it. It has every screen and no matrix. Its position never changes, it never moves, and `destroy` refuses it whoever calls it, from the console too. As no other role can get position 1, there is never a second one.
+
+### Positions
+
+Nobody types a position. A new role gets the next free one (`Role.new.position`, the highest + 1, at least 2), and the order changes only by moving a role one step:
+
+```ruby
+role.movable_up?    # false for the first ordinary role and for the admin role
+role.movable_down?  # false for the last ordinary role and for the admin role
+role.move_up        # true when it moved
+role.move_down
+```
+
+A move renumbers every ordinary role gapless (2, 3, 4…) in one transaction, and deleting a role closes its gap the same way. Saving a changed position is refused, and a position passed to `create` is replaced by the next free one. Authorize moves with the policy's `move_up?` and `move_down?`.
+
+Show the arrows only on a list that is not filtered and is ordered by position, otherwise a move passes neighbours nobody sees. The generated ActiveAdmin screen does that and shows the position in its form as a disabled field.
 
 Put the matrix into the role form and onto the role detail:
 
@@ -243,7 +264,7 @@ or a superadmin. To filter subjects by role, add `roles` and `role_assignments` 
 
 The adapter loads only when the app has ActiveAdmin (3.x with `ActiveAdmin::PunditAdapter`); the rest of the gem does not need it. `bin/rails generate pundit:matrix:active_admin User` (`--namespace` defaults to `admin`), also run by the install generator:
 
-- creates the roles screen `app/admin/roles.rb` with the matrix and the missing superadmin warning, and `Admin::RolePolicy`
+- creates the roles screen `app/admin/roles.rb` with the matrix, the missing superadmin warning and move arrows in the position column, and `Admin::RolePolicy`
 - creates `Admin::ActiveAdmin::PagePolicy`, which reads what each page declares; when you let it replace a page policy of your own, it reminds you that what that policy decided now belongs in each `register_page`
 - turns `screen` into `subject_screen` in `Admin::UserPolicy`
 - points `config.on_unauthorized_access` to `:pundit_matrix_access_denied`, unless you have a handler of your own
@@ -356,13 +377,16 @@ sk:
     admin_role: Admin rola má všetky práva, aj na obrazovky pridané neskôr.
     admin_role_name: Admin
     no_superadmin: Zatiaľ nie je žiadny aktívny superadmin.
+    move_up: Posunúť vyššie
+    move_down: Posunúť nižšie
     levels:
       none: Žiadny prístup
       read: Čítanie
       write: Zápis
     errors:
-      above_ordinary_roles: musí byť nad všetkými bežnými rolami
-      below_admin_roles: musí byť pod všetkými admin rolami
+      admin_position: ostáva 1, admin rola je prvá
+      position_moved_only: sa mení len posunutím roly vyššie alebo nižšie
+      admin_role_kept: Admin rolu nemožno zmazať
       screen_not_declared: nie je deklarovaná
       level_not_offered: nie je na tejto obrazovke dostupný
       admin_role: má už všetky práva
@@ -371,6 +395,8 @@ sk:
       own_roles: Vlastné roly môže meniť len superadmin
       role_not_assignable: obsahujú rolu %{role}, ktorú nemôžete prideliť
       superadmin_only: môže zmeniť len superadmin
+      superadmin_without_admin_role: potrebuje admin rolu
+      admin_role_of_superadmin: musia obsahovať admin rolu superadmina
     screens:
       orders: Objednávky
     groups:
