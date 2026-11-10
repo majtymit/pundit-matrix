@@ -20,8 +20,15 @@ change whose roles and gives the host app the answers.
 
 ## Screens
 
-- The host app declares its screens in code: key, label (i18n), group in the menu, and whether the screen is
-  read-only. The matrix stores levels in the database by screen key.
+- The host app declares its screens in code: key, label (i18n), group, and whether the screen is read-only. The
+  matrix stores levels in the database by screen key.
+- With ActiveAdmin, the group, the order and the labels come from the admin menu, where the app declares them
+  anyway, so the two never drift apart; the initializer keeps the keys and `read_only:`, and what it or the
+  translations declare explicitly still wins. The menu is read only when the matrix renders inside the admin, so
+  roles, levels and policies never wait for the admin to load.
+- Read-only is declared, never inferred from the actions, because a new action would quietly open a write level.
+  The screens spec checks instead that a read-only screen offers no action needing write and a writable one has
+  one.
 - A read-only screen (history of changes, API request log) offers only `none` and `read` in the matrix.
 - A screen with no level set for a role means `none`. A new screen is therefore closed for every ordinary role
   until someone opens it in the matrix.
@@ -100,9 +107,10 @@ change whose roles and gives the host app the answers.
 - The project names each role and sets its permissions. Positions are unique, so it is always clear which of two
   roles is higher. Position 1 is the highest.
 - Positions are never typed. A new role gets the next free one, and the order changes only by moving a role one
-  step up or down. A move renumbers the ordinary roles gapless in one transaction, through negative positions, so
-  the unique index never sees two roles on one position; deleting a role closes its gap the same way. The move is
-  a model API, so an app without ActiveAdmin wires its own buttons.
+  step up or down. A move renumbers the ordinary roles gapless in one transaction, first past every position and
+  then to the final one, so the unique index never sees two roles on one position; deleting a role closes its gap
+  the same way. Each role is saved, with its callbacks, so an audit sees two position changes per role and move.
+  The move is a model API, so an app without ActiveAdmin wires its own buttons.
 - Move arrows show only on an unfiltered list ordered by position, because elsewhere a move would pass neighbours
   nobody sees.
 - A role that is held by any subject cannot be deleted.
@@ -218,7 +226,8 @@ ActiveAdmin app would otherwise find out the hard way:
   open. Signing out instead is the host's choice: it points `on_unauthorized_access` to its own handler.
 - The generated screens spec walks every resource and page: each has a screen, an admin screen or an open screen;
   without the level the address is refused, with read it opens and the menu shows only it and nothing can be changed,
-  and with write it offers what an admin gets.
+  and with write it offers what an admin gets. It also fails on a screen under two menu parents and on levels that
+  do not match the actions: a read-only screen with an action needing write, a writable one without any.
 
 ### Tests
 

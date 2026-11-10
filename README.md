@@ -73,7 +73,7 @@ Pundit::Matrix.setup_superadmin!(User.find_by!(email: 'you@example.com'))
 
 ## Screens
 
-Declare your screens in `config/initializers/pundit_matrix.rb`. Groups are optional and only order the matrix; once there is one, screens outside every group are listed under General (`pundit_matrix.ungrouped`).
+Declare your screens in `config/initializers/pundit_matrix.rb`: their keys and which are read-only. That is what roles, levels and policies need, in requests, the console, seeds and jobs alike. Groups are optional and only arrange the matrix; once there is one, screens outside every group are listed under General (`pundit_matrix.ungrouped`).
 
 ```ruby
 Pundit::Matrix.configure do |config|
@@ -92,6 +92,19 @@ end
 ```
 
 A read-only screen offers no access and read only. A new screen is closed for every ordinary role; the admin role and superadmins get it automatically.
+
+With ActiveAdmin, the matrix takes the rest from the admin menu, so the initializer shrinks to the keys:
+
+```ruby
+config.screens do
+  screen :orders
+  screen :invoices
+  screen :users
+  screen :reports, read_only: true
+end
+```
+
+A screen's group is the menu parent of the registration whose policy or page declares it, groups follow the parents' menu priority and screens within a group their items' priority, and the headings fall back to the menu labels, as text only when a label renders an icon. What the initializer (`group`) or the translations (`pundit_matrix.groups.*`, `pundit_matrix.screens.*`) declare still wins. The menu is read only where the matrix is rendered inside the admin, so nothing else waits for ActiveAdmin to load. When a screen spans several registrations, the one shown in the menu gives its place; if they sit under different parents, [the screens spec](#the-screens-spec) fails.
 
 ## Policies
 
@@ -274,7 +287,9 @@ end
 ```
 
 The hooks are `:pundit_matrix_role`, `:pundit_matrix_permission` and `:pundit_matrix_role_assignment`. Changing roles
-through `role_ids=` destroys the assignments it drops, so their callbacks run.
+through `role_ids=` destroys the assignments it drops, so their callbacks run. Moving a role up or down saves every
+ordinary role twice, to a temporary and then to its final position, so an audit records two position changes per role
+and move.
 
 Ransack can search roles by their own columns and assignments by role, while no one acts or the actor is an admin
 or a superadmin. To filter subjects by role, add `roles` and `role_assignments` to the subject's
@@ -303,6 +318,7 @@ end
 
 ActiveAdmin.register User do
   matrix_subject
+  menu parent: 'access', priority: 2 # the matrix lists users under this parent, in this order
 
   permit_params :email
 
@@ -364,7 +380,7 @@ When the app already sets `on_unauthorized_access`, the generator keeps it and o
 
 ### The screens spec
 
-The generated spec walks every resource and page of the namespace. Each one needs a screen, an admin screen or an open screen. Without the level its address is refused; with read it opens, the menu shows only screens with that key, and it offers no change and no action. With write it offers what an admin gets, and actions of another screen go to whoever writes there. List what knowingly stays outside the matrix in `outside_the_matrix`. Without Devise, fill in `create_subject` and `sign_in`.
+The generated spec walks every resource and page of the namespace. Each one needs a screen, an admin screen or an open screen. Without the level its address is refused; with read it opens, the menu shows only screens with that key, and it offers no change and no action. With write it offers what an admin gets, and actions of another screen go to whoever writes there. It also fails when a screen sits under two menu parents, when a read-only screen offers an action that needs write (`create`, `update` or `destroy` the controller defines and the policy, asked about the class, does not switch off, a member or collection action other than GET, or a page action other than GET), and when a writable screen has no such action, so its write level would grant nothing. An action of another screen (`actions_of_screen`) counts for that screen. Read-only stays declared, never inferred from the actions, so a new action never quietly opens a write level. List what knowingly stays outside the matrix in `outside_the_matrix`; the checks leave it out too. Without Devise, fill in `create_subject` and `sign_in`.
 
 ## Testing
 
