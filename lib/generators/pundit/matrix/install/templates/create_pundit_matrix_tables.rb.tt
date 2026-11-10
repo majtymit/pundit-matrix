@@ -14,10 +14,12 @@ class CreatePunditMatrixTables < ActiveRecord::Migration[<%= migration_version %
     end
 
     create_table :<%= table_prefix %>permissions<%= ", id: :#{primary_key_type}" if primary_key_type %> do |t|
-      t.references :role,
-                   null: false,
-                   index: false,
-                   foreign_key: { to_table: :<%= table_prefix %>roles }<%= ",\n                   type: :#{primary_key_type}" if primary_key_type %>
+      t.references(
+        :role,
+        null: false,
+        index: false,
+        foreign_key: { to_table: :<%= table_prefix %>roles }<%= ",\n        type: :#{primary_key_type}" if primary_key_type %>
+      )
       t.string :screen, null: false
       t.string :level, null: false
       t.timestamps
@@ -27,19 +29,23 @@ class CreatePunditMatrixTables < ActiveRecord::Migration[<%= migration_version %
     end
 
     create_table :<%= table_prefix %>role_assignments<%= ", id: :#{primary_key_type}" if primary_key_type %> do |t|
-      t.references :role,
-                   null: false,
-                   foreign_key: { to_table: :<%= table_prefix %>roles }<%= ",\n                   type: :#{primary_key_type}" if primary_key_type %>
-      t.references :subject,
-                   null: false,
-                   polymorphic: true,
-                   index: false<%= ",\n                   type: :#{subject_id_type}" if subject_id_type %>
+      t.references(
+        :role,
+        null: false,
+        foreign_key: { to_table: :<%= table_prefix %>roles }<%= ",\n        type: :#{primary_key_type}" if primary_key_type %>
+      )
+      t.references(
+        :subject,
+        null: false,
+        polymorphic: true,
+        index: false<%= ",\n        type: :#{subject_id_type}" if subject_id_type %>
+      )
       t.timestamps
 
       t.index %i[subject_type subject_id role_id], unique: true
     end
 
     # The role at position 1 is the admin role.
-    up_only { Role.create!(name: <%= admin_role_name.inspect %>, position: 1) }
+    up_only { Role.create!(name: Pundit::Matrix.t('admin_role_name'), position: 1) }
   end
 end

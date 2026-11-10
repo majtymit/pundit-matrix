@@ -51,7 +51,7 @@ RSpec.describe Pundit::Matrix::InstallGenerator do
     run_generator('User', '--table-prefix=matrix_')
 
     expect(migration).to include("self.table_name = 'matrix_roles'")
-    expect(migration).to include('up_only { Role.create!(name: "Admin", position: 1) }')
+    expect(migration).to include("up_only { Role.create!(name: Pundit::Matrix.t('admin_role_name'), position: 1) }")
     expect(migration).not_to include(':admin')
   end
 
@@ -219,12 +219,13 @@ RSpec.describe Pundit::Matrix::InstallGenerator do
     allow(Rails.application.config.generators).to receive(:options)
       .and_return(active_record: { primary_key_type: :uuid })
     uuid = instance_double(ActiveRecord::ConnectionAdapters::Column, type: :uuid)
+    User.column_names
     allow(User).to receive(:columns_hash).and_return('id' => uuid)
 
     run_generator('User', '--table-prefix=matrix_')
 
     expect(migration).to include('create_table :matrix_roles, id: :uuid do |t|')
-    expect(migration).to include("polymorphic: true,\n                   index: false,\n                   type: :uuid")
+    expect(migration).to include("polymorphic: true,\n        index: false,\n        type: :uuid\n      )")
   end
 
   it 'leaves out the table prefix when there is none' do

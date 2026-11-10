@@ -116,10 +116,6 @@ module Pundit
         ActiveRecord::Migration.current_version
       end
 
-      def admin_role_name
-        Pundit::Matrix.t('admin_role_name')
-      end
-
       def table_prefix
         options[:table_prefix]
       end

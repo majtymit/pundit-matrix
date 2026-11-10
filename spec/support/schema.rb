@@ -25,8 +25,7 @@ Dir.mktmpdir do |dir|
       migration_version: ActiveRecord::Migration.current_version,
       table_prefix: '',
       primary_key_type: nil,
-      subject_id_type: nil,
-      admin_role_name: 'Admin'
+      subject_id_type: nil
     )
   )
   load migration

@@ -59,7 +59,8 @@ RSpec.describe 'Pundit::Matrix screens of <%= namespace %>', type: :request do
 
   it 'opens an admin screen to admins only' do
     admin = make_admin(create_subject)
-    everything = grant_levels(create_subject, **Pundit::Matrix.screens.to_h { |screen| [screen.key, screen.levels.last] })
+    highest_levels = Pundit::Matrix.screens.to_h { |screen| [screen.key, screen.levels.last] }
+    everything = grant_levels(create_subject, **highest_levels)
 
     screens_with(:admin).each do |screen|
       sign_in admin
@@ -169,7 +170,7 @@ RSpec.describe 'Pundit::Matrix screens of <%= namespace %>', type: :request do
   end
 
   def open_paths
-    ["/<%= namespace %>", *screens_with(:open).map { |screen| screen[:path] }]
+    ['/<%= namespace %>', *screens_with(:open).map { |screen| screen[:path] }]
   end
 
   def menu_paths
