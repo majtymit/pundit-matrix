@@ -1,7 +1,7 @@
 RSpec.describe Pundit::Matrix::Permission do
   include_context 'with fresh configuration'
 
-  let(:role) { Pundit::Matrix::Role.create!(name: 'Operator', position: 1) }
+  let(:role) { Pundit::Matrix::Role.create!(name: 'Operator') }
 
   before do
     Pundit::Matrix.screens.draw do
@@ -51,7 +51,7 @@ RSpec.describe Pundit::Matrix::Permission do
   end
 
   it 'refuses an admin role, which has every permission already' do
-    admin = Pundit::Matrix::Role.create!(name: 'Admin', position: 2, admin: true)
+    admin = Pundit::Matrix::Role.admin_role
     permission = admin.permissions.new(screen: 'orders', level: 'read')
 
     expect(permission).not_to be_valid

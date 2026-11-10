@@ -4,7 +4,7 @@ RSpec.describe Pundit::Matrix::Subject do
   end
 
   it 'gives the subject its roles' do
-    role = Pundit::Matrix::Role.create!(name: 'Operator', position: 1)
+    role = Pundit::Matrix::Role.create!(name: 'Operator')
     user = create_user('a@example.com')
     user.roles << role
 
@@ -12,8 +12,8 @@ RSpec.describe Pundit::Matrix::Subject do
   end
 
   it 'runs the callbacks of the assignments it drops, so the host can audit them' do
-    kept = Pundit::Matrix::Role.create!(name: 'Operator', position: 1)
-    dropped = Pundit::Matrix::Role.create!(name: 'Analyst', position: 2)
+    kept = Pundit::Matrix::Role.create!(name: 'Operator')
+    dropped = Pundit::Matrix::Role.create!(name: 'Analyst')
     user = create_user('a@example.com')
     user.update!(role_ids: [kept.id, dropped.id])
     DestroyedAssignments.role_ids.clear
@@ -25,7 +25,7 @@ RSpec.describe Pundit::Matrix::Subject do
 
   it 'removes role assignments together with the subject' do
     user = create_user('a@example.com')
-    user.roles << Pundit::Matrix::Role.create!(name: 'Operator', position: 1)
+    user.roles << Pundit::Matrix::Role.create!(name: 'Operator')
 
     expect { user.destroy }.to change(Pundit::Matrix::RoleAssignment, :count).by(-1)
   end

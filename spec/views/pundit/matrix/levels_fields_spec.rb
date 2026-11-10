@@ -1,7 +1,7 @@
 RSpec.describe 'pundit/matrix/_levels_fields' do
   include_context 'with fresh configuration'
 
-  let(:role) { Pundit::Matrix::Role.create!(name: 'Operator', position: 2) }
+  let(:role) { Pundit::Matrix::Role.create!(name: 'Operator') }
 
   before do
     Pundit::Matrix.screens.draw do
@@ -70,7 +70,7 @@ RSpec.describe 'pundit/matrix/_levels_fields' do
   end
 
   it 'explains that an admin role has every permission' do
-    admin = Pundit::Matrix::Role.create!(name: 'Admin', position: 1, admin: true)
+    admin = Pundit::Matrix::Role.admin_role
 
     expect(render_fields(role: admin).text.strip).to eq(I18n.t('pundit_matrix.admin_role'))
   end

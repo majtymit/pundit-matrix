@@ -1,5 +1,5 @@
 RSpec.describe Pundit::Matrix::RoleAssignment do
-  let(:role) { Pundit::Matrix::Role.create!(name: 'Operator', position: 1) }
+  let(:role) { Pundit::Matrix::Role.create!(name: 'Operator') }
   let(:user) { User.create!(email: 'a@example.com') }
 
   it 'assigns a role to any subject' do
@@ -21,9 +21,9 @@ RSpec.describe Pundit::Matrix::RoleAssignment do
 
   it 'lets only admins and superadmins search subjects by role' do
     admin = User.create!(email: 'admin@example.com')
-    admin.roles << Pundit::Matrix::Role.create!(name: 'Admin', position: 1, admin: true)
+    admin.roles << Pundit::Matrix::Role.admin_role
     operator = User.create!(email: 'operator@example.com')
-    operator.roles << Pundit::Matrix::Role.create!(name: 'Operator', position: 2)
+    operator.roles << Pundit::Matrix::Role.create!(name: 'Operator')
     superadmin = User.create!(email: 'super@example.com', superadmin: true)
 
     [admin, superadmin].each do |actor|

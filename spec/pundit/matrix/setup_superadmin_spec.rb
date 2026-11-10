@@ -3,24 +3,33 @@ require 'rake'
 RSpec.describe Pundit::Matrix, '.setup_superadmin!' do
   let(:user) { User.create!(email: 'a@example.com') }
 
-  it 'creates the admin role and makes the subject a superadmin holding it' do
+  it 'makes the subject a superadmin holding the admin role' do
     role = described_class.setup_superadmin!(user)
 
-    expect(role).to have_attributes(name: 'Admin', position: 1, admin: true)
+    expect(role).to eq(Pundit::Matrix::Role.admin_role)
     expect(user.reload).to be_superadmin
     expect(user.roles).to eq([role])
   end
 
-  it 'reuses the highest admin role and keeps the other roles' do
-    admin_role = Pundit::Matrix::Role.create!(name: 'Správca', position: 2, admin: true)
-    operator = Pundit::Matrix::Role.create!(name: 'Operator', position: 3)
+  it 'creates the admin role when there is none' do
+    Pundit::Matrix::Role.admin_role.delete
+
+    role = described_class.setup_superadmin!(user)
+
+    expect(role).to have_attributes(name: 'Admin', position: 1)
+    expect(role).to be_admin
+  end
+
+  it 'reuses the admin role and keeps the other roles' do
+    Pundit::Matrix::Role.admin_role.update!(name: 'Správca')
+    operator = Pundit::Matrix::Role.create!(name: 'Operator')
     user.roles << operator
 
     described_class.setup_superadmin!(user)
     described_class.setup_superadmin!(user)
 
-    expect(Pundit::Matrix::Role.admins).to eq([admin_role])
-    expect(user.reload.roles).to contain_exactly(admin_role, operator)
+    expect(Pundit::Matrix::Role.pluck(:name)).to contain_exactly('Správca', 'Operator')
+    expect(user.reload.roles.map(&:name)).to contain_exactly('Správca', 'Operator')
   end
 
   it 'runs whoever acts' do

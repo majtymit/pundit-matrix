@@ -20,9 +20,9 @@ RSpec.describe Pundit::Matrix::Policy::SubjectActions do
     end
   end
 
-  let(:admin_role) { Pundit::Matrix::Role.create!(name: 'Admin', position: 1, admin: true) }
-  let(:manager_role) { Pundit::Matrix::Role.create!(name: 'Manager', position: 2) }
-  let(:operator_role) { Pundit::Matrix::Role.create!(name: 'Operator', position: 3) }
+  let(:admin_role) { Pundit::Matrix::Role.admin_role }
+  let!(:manager_role) { Pundit::Matrix::Role.create!(name: 'Manager') }
+  let!(:operator_role) { Pundit::Matrix::Role.create!(name: 'Operator') }
 
   let(:superadmin) { create_user('super', superadmin: true) }
   let(:admin) { create_user('admin', admin_role) }

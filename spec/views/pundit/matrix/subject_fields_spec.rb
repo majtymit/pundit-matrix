@@ -1,7 +1,7 @@
 RSpec.describe 'pundit/matrix/_subject_fields' do
-  let(:admin_role) { Pundit::Matrix::Role.create!(name: 'Admin', position: 1, admin: true) }
-  let(:manager_role) { Pundit::Matrix::Role.create!(name: 'Manager', position: 2) }
-  let(:operator_role) { Pundit::Matrix::Role.create!(name: 'Operator', position: 3) }
+  let(:admin_role) { Pundit::Matrix::Role.admin_role }
+  let(:manager_role) { Pundit::Matrix::Role.create!(name: 'Manager') }
+  let(:operator_role) { Pundit::Matrix::Role.create!(name: 'Operator') }
 
   let(:superadmin) { User.create!(email: 'super@example.com', superadmin: true) }
   let(:manager) { User.create!(email: 'manager@example.com').tap { |user| user.roles << manager_role } }

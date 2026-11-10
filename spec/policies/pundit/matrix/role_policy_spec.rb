@@ -1,25 +1,31 @@
 RSpec.describe Pundit::Matrix::RolePolicy do
-  let(:admin_role) { Pundit::Matrix::Role.create!(name: 'Admin', position: 1, admin: true) }
-  let(:operator_role) { Pundit::Matrix::Role.create!(name: 'Operator', position: 2) }
+  let(:admin_role) { Pundit::Matrix::Role.admin_role }
+  let(:operator_role) { Pundit::Matrix::Role.create!(name: 'Operator') }
 
-  let(:superadmin) { User.create!(email: 'super@example.com', superadmin: true) }
-  let(:admin) { User.create!(email: 'admin@example.com').tap { |user| user.roles << admin_role } }
+  let(:superadmin) { make_superadmin(User.create!(email: 'super@example.com')) }
+  let(:admin) { make_admin(User.create!(email: 'admin@example.com')) }
   let(:operator) { User.create!(email: 'operator@example.com').tap { |user| user.roles << operator_role } }
+
+  let(:every_action) { %i[index? show? new? create? edit? update? destroy? move_up? move_down?] }
 
   def allowed(user, record)
     policy = described_class.new(user, record)
-    %i[index? show? new? create? edit? update? destroy?].select { |action| policy.public_send(action) }
+    every_action.select { |action| policy.public_send(action) }
   end
 
-  it 'lets a superadmin do everything with any role' do
-    expect(allowed(superadmin, admin_role)).to eq(%i[index? show? new? create? edit? update? destroy?])
+  it 'lets a superadmin do everything with an ordinary role' do
+    expect(allowed(superadmin, operator_role)).to eq(every_action)
   end
 
-  it 'lets an admin manage ordinary roles' do
-    expect(allowed(admin, operator_role)).to eq(%i[index? show? new? create? edit? update? destroy?])
+  it 'lets a superadmin rename the admin role, but never delete or move it' do
+    expect(allowed(superadmin, admin_role)).to eq(%i[index? show? new? create? edit? update?])
   end
 
-  it 'keeps admin roles away from an admin' do
+  it 'lets an admin manage and move ordinary roles' do
+    expect(allowed(admin, operator_role)).to eq(every_action)
+  end
+
+  it 'keeps the admin role away from an admin' do
     expect(allowed(admin, admin_role)).to eq(%i[index? show? new? create?])
   end
 
@@ -28,9 +34,9 @@ RSpec.describe Pundit::Matrix::RolePolicy do
     expect(allowed(nil, operator_role)).to be_empty
   end
 
-  it 'lets only a superadmin set the admin flag' do
-    expect(described_class.new(superadmin, operator_role).permitted_attributes).to include(:admin)
-    expect(described_class.new(admin, operator_role).permitted_attributes).to eq([:name, :position, { levels: {} }])
+  it 'permits the name and the levels, never the position' do
+    expect(described_class.new(superadmin, operator_role).permitted_attributes).to eq([:name, { levels: {} }])
+    expect(described_class.new(admin, operator_role).permitted_attributes).to eq([:name, { levels: {} }])
   end
 
   it 'lists roles only for admins and superadmins' do

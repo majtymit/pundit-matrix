@@ -16,10 +16,10 @@ RSpec.describe Pundit::Matrix::TestHelpers do
 
     expect(user.reload.access.level(:orders)).to eq(:write)
     expect(user.access.level(:invoices)).to eq(:write)
-    expect(user.roles.map(&:position)).to eq([1001, 1002])
+    expect(user.roles.map(&:position)).to eq([2, 3])
   end
 
-  it 'makes an admin, with room above the roles of a spec' do
+  it 'makes an admin next to the roles of a spec' do
     grant_levels(user, orders: :read)
 
     expect(make_admin(user).reload.access).to be_admin

@@ -55,7 +55,7 @@ module Pundit
         return Role.ordered if superadmin?
         return Role.none if position.nil?
 
-        Role.ordinary.where(Role.arel_table[:position].gt(position)).ordered
+        Role.where(Role.arel_table[:position].gt(position)).ordered
       end
 
       private

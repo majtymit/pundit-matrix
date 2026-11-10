@@ -47,6 +47,14 @@ RSpec.describe Pundit::Matrix::InstallGenerator do
     expect(output.scan('Next:').size).to eq(1)
   end
 
+  it 'creates the admin role at position 1 in the migration, and no admin flag' do
+    run_generator('User', '--table-prefix=matrix_')
+
+    expect(migration).to include("self.table_name = 'matrix_roles'")
+    expect(migration).to include('up_only { Role.create!(name: "Admin", position: 1) }')
+    expect(migration).not_to include(':admin')
+  end
+
   describe 'with ActiveAdmin' do
     it 'sets it up and leaves out the role policy outside the namespace, which nothing would use' do
       run_generator('User', '--table-prefix=matrix_')

@@ -37,11 +37,19 @@ module Pundit
       end
 
       def destroy?
-        update?
+        ordinary_role_manager?
+      end
+
+      def move_up?
+        ordinary_role_manager?
+      end
+
+      def move_down?
+        ordinary_role_manager?
       end
 
       def permitted_attributes
-        superadmin? ? [:name, :position, :admin, { levels: {} }] : [:name, :position, { levels: {} }]
+        [:name, { levels: {} }]
       end
 
       class Scope
@@ -59,6 +67,10 @@ module Pundit
 
       def manager?
         user.present? && user.access.everything?
+      end
+
+      def ordinary_role_manager?
+        manager? && !record.admin?
       end
 
       def superadmin?

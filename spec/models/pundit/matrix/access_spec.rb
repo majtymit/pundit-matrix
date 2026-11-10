@@ -11,8 +11,8 @@ RSpec.describe Pundit::Matrix::Access do
     end
   end
 
-  def create_role(name, position, admin: false, **levels)
-    Pundit::Matrix::Role.create!(name:, position:, admin:).tap do |role|
+  def create_role(name, **levels)
+    Pundit::Matrix::Role.create!(name:).tap do |role|
       levels.each { |screen, level| role.permissions.create!(screen:, level:) }
     end
   end
@@ -24,7 +24,7 @@ RSpec.describe Pundit::Matrix::Access do
   end
 
   it 'gives the level the role has on a screen' do
-    user.roles << create_role('Operator', 2, orders: 'read')
+    user.roles << create_role('Operator', orders: 'read')
 
     expect(user.access.level(:orders)).to eq(:read)
     expect(user.access).to be_read(:orders)
@@ -33,8 +33,8 @@ RSpec.describe Pundit::Matrix::Access do
   end
 
   it 'gives the highest level from all roles of the subject' do
-    user.roles << create_role('Operator', 2, orders: 'write', invoices: 'read')
-    user.roles << create_role('Accountant', 3, orders: 'read', audit_log: 'read')
+    user.roles << create_role('Operator', orders: 'write', invoices: 'read')
+    user.roles << create_role('Accountant', orders: 'read', audit_log: 'read')
 
     expect(user.access.level(:orders)).to eq(:write)
     expect(user.access.level(:invoices)).to eq(:read)
@@ -42,7 +42,7 @@ RSpec.describe Pundit::Matrix::Access do
   end
 
   it 'gives an admin role everything the screens offer' do
-    user.roles << create_role('Admin', 1, admin: true)
+    user.roles << Pundit::Matrix::Role.admin_role
 
     expect(user.access).to be_everything
     expect(user.access.level(:orders)).to eq(:write)
@@ -57,7 +57,7 @@ RSpec.describe Pundit::Matrix::Access do
   end
 
   it 'ignores levels stored for a screen that is no longer declared' do
-    user.roles << create_role('Operator', 2, orders: 'read', invoices: 'write')
+    user.roles << create_role('Operator', orders: 'read', invoices: 'write')
     Pundit::Matrix.instance_variable_set(:@config, Pundit::Matrix::Configuration.new)
     Pundit::Matrix.screens.draw { screen :orders }
 
@@ -79,22 +79,22 @@ RSpec.describe Pundit::Matrix::Access do
   end
 
   it 'loads the roles and levels once' do
-    user.roles << create_role('Operator', 2, orders: 'read')
+    user.roles << create_role('Operator', orders: 'read')
     user = User.find(self.user.id)
 
     expect(count_queries { 3.times { user.access.read?(:orders) } }).to eq(2)
   end
 
   it 'needs no query for an admin role to read its levels once roles are loaded' do
-    user.roles << create_role('Admin', 1, admin: true)
+    user.roles << Pundit::Matrix::Role.admin_role
     user = User.includes(:roles).find(self.user.id)
 
     expect(count_queries { user.access.level(:orders) }).to eq(0)
   end
 
   it 'checks preloaded subjects without further queries' do
-    manager = create_role('Manager', 2)
-    operator = create_role('Operator', 3)
+    manager = create_role('Manager')
+    operator = create_role('Operator')
     user.roles << manager
     3.times { |i| User.create!(email: "#{i}@example.com").roles << operator }
     user.access.position
@@ -105,7 +105,7 @@ RSpec.describe Pundit::Matrix::Access do
 
   it 'loads the levels again after the subject is reloaded' do
     user.access.level(:orders)
-    user.roles << create_role('Operator', 2, orders: 'write')
+    user.roles << create_role('Operator', orders: 'write')
 
     expect(user.reload.access.level(:orders)).to eq(:write)
   end
@@ -114,7 +114,7 @@ RSpec.describe Pundit::Matrix::Access do
     it 'is false without a role or with levels only on screens no longer declared' do
       expect(user.access).not_to be_any
 
-      role = create_role('Operator', 2)
+      role = create_role('Operator')
       role.permissions.new(screen: 'old_screen', level: 'read').save!(validate: false)
       user.roles << role
 
@@ -122,13 +122,13 @@ RSpec.describe Pundit::Matrix::Access do
     end
 
     it 'is true with read on one screen' do
-      user.roles << create_role('Operator', 2, audit_log: 'read')
+      user.roles << create_role('Operator', audit_log: 'read')
 
       expect(user.access).to be_any
     end
 
     it 'is true for admins and superadmins' do
-      user.roles << create_role('Admin', 1, admin: true)
+      user.roles << Pundit::Matrix::Role.admin_role
 
       expect(user.access).to be_any
       expect(User.new(superadmin: true).access).to be_any

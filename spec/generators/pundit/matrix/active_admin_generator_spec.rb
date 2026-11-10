@@ -37,6 +37,16 @@ RSpec.describe Pundit::Matrix::ActiveAdminGenerator do
     expect(resource).to include("render 'pundit/matrix/superadmin_warning', subjects: User")
   end
 
+  it 'lets the roles screen move roles and keeps their positions out of reach' do
+    run_generator
+
+    resource = read('app/admin/roles.rb')
+    expect(resource).to include('member_action :move_up, method: :put do', 'member_action :move_down, method: :put do')
+    expect(resource).to include('move_up_admin_role_path(role)', 'move_down_admin_role_path(role)')
+    expect(resource).to include('f.input :position, input_html: { disabled: true }')
+    expect(resource).not_to include('filter :admin', 'column :admin', 'row :admin', 'input :admin')
+  end
+
   it 'creates the role policy and the page policy ActiveAdmin looks for' do
     run_generator
 

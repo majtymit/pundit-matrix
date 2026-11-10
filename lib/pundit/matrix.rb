@@ -50,7 +50,7 @@ module Pundit
       end
 
       def admin_role!
-        Role.admins.ordered.first || Role.create!(name: t('admin_role_name'), position: 1, admin: true)
+        Role.admin_role || Role.create!(name: t('admin_role_name'), position: Role::ADMIN_POSITION)
       end
     end
   end

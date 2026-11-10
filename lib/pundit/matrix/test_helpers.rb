@@ -1,12 +1,8 @@
 module Pundit
   module Matrix
     module TestHelpers
-      # Ordinary roles of a spec start far down, so an admin role still fits above them.
-      FIRST_ORDINARY_POSITION = 1000
-
       def grant_levels(subject, **levels)
-        position = [Role.maximum(:position).to_i, FIRST_ORDINARY_POSITION].max + 1
-        give_role(subject, Role.create!(name: "Levels #{position}", position:, levels:))
+        give_role(subject, Role.create!(name: "Levels #{Role.next_position}", levels:))
       end
 
       def make_admin(subject)

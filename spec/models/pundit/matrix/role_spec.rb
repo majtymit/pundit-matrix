@@ -1,22 +1,25 @@
 RSpec.describe Pundit::Matrix::Role do
-  def create_role(name, position, admin: false)
-    described_class.create!(name:, position:, admin:)
+  let(:admin_role) { described_class.admin_role }
+
+  def create_roles(*names)
+    names.map { |name| described_class.create!(name:) }
   end
 
-  it 'needs a name and a positive position' do
-    role = described_class.new(position: 0)
-
-    expect(role).not_to be_valid
-    expect(role.errors.attribute_names).to contain_exactly(:name, :position)
+  def order
+    described_class.ordered.pluck(:name, :position)
   end
 
-  it 'refuses a name or position another role already has' do
-    create_role('Operator', 2)
-
-    role = described_class.new(name: 'Operator', position: 2)
+  it 'needs a name' do
+    role = described_class.new
 
     expect(role).not_to be_valid
-    expect(role.errors.attribute_names).to contain_exactly(:name, :position)
+    expect(role.errors.attribute_names).to contain_exactly(:name)
+  end
+
+  it 'refuses a name another role already has' do
+    create_roles('Operator')
+
+    expect(described_class.new(name: 'Operator')).not_to be_valid
   end
 
   it 'is higher than a role with a bigger position' do
@@ -25,41 +28,121 @@ RSpec.describe Pundit::Matrix::Role do
   end
 
   it 'orders roles from the highest' do
-    operator = create_role('Operator', 3)
-    admin = create_role('Admin', 1, admin: true)
-    manager = create_role('Manager', 2)
+    operator, manager = create_roles('Operator', 'Manager')
 
-    expect(described_class.ordered).to eq([admin, manager, operator])
+    expect(described_class.ordered).to eq([admin_role, operator, manager])
   end
 
-  describe 'admin roles' do
-    before do
-      create_role('Admin', 2, admin: true)
-      create_role('Operator', 4)
+  describe 'the admin role' do
+    it 'is the role at position 1, made by the install migration' do
+      expect(admin_role).to have_attributes(name: 'Admin', position: 1)
+      expect(admin_role).to be_admin
+      expect(create_roles('Operator').first).not_to be_admin
     end
 
-    it 'keeps an admin role above every ordinary role' do
-      role = described_class.new(name: 'Another admin', position: 5, admin: true)
-
-      expect(role).not_to be_valid
-      expect(role.errors[:position]).to eq(['must be above every ordinary role'])
+    it 'cannot exist twice' do
+      expect(described_class.new(name: 'Second admin', position: 1)).not_to be_valid
     end
 
-    it 'keeps an ordinary role below every admin role' do
-      role = described_class.new(name: 'Manager', position: 1)
-
-      expect(role).not_to be_valid
-      expect(role.errors[:position]).to eq(['must be below every admin role'])
+    it 'keeps position 1' do
+      expect(admin_role.update(position: 2)).to be(false)
+      expect(admin_role.errors[:position]).to eq(['stays 1, the admin role comes first'])
+      expect(admin_role).to be_admin
     end
 
-    it 'allows roles in between' do
-      expect(described_class.new(name: 'Another admin', position: 1, admin: true)).to be_valid
-      expect(described_class.new(name: 'Manager', position: 3)).to be_valid
+    it 'cannot be deleted, by anyone' do
+      expect(admin_role.destroy).to be(false)
+      expect(admin_role.errors[:base]).to eq(['The admin role cannot be deleted'])
+      expect { admin_role.destroy! }.to raise_error(ActiveRecord::RecordNotDestroyed)
+      expect(described_class.admin_role).to eq(admin_role)
+    end
+
+    it 'does not move' do
+      create_roles('Operator')
+
+      expect(admin_role).not_to be_movable_up
+      expect(admin_role).not_to be_movable_down
+      expect(admin_role.move_down).to be(false)
+      expect(order.first).to eq(['Admin', 1])
+    end
+
+    it 'gets position 1 back when it is missing, while ordinary roles keep their places' do
+      admin_role.delete
+      create_roles('Operator')
+
+      expect(Pundit::Matrix.admin_role!).to have_attributes(name: 'Admin', position: 1)
+      expect(order).to eq([['Admin', 1], ['Operator', 2]])
+    end
+  end
+
+  describe 'positions' do
+    it 'gives a new role the next free position, never the one of the admin role' do
+      admin_role.delete
+      expect(described_class.new.position).to eq(2)
+
+      create_roles('Operator')
+      expect(described_class.new.position).to eq(3)
+    end
+
+    it 'ignores a position given by hand' do
+      role = described_class.create!(name: 'Operator', position: 7)
+
+      expect(role.position).to eq(2)
+    end
+
+    it 'refuses a change of position other than a move' do
+      role, = create_roles('Operator', 'Manager')
+
+      expect(role.update(position: 3)).to be(false)
+      expect(role.errors[:position]).to include('changes only by moving the role up or down')
+    end
+
+    it 'moves a role one step up or down' do
+      operator, manager, analyst = create_roles('Operator', 'Manager', 'Analyst')
+
+      expect(analyst.move_up).to be(true)
+      expect(order).to eq([['Admin', 1], ['Operator', 2], ['Analyst', 3], ['Manager', 4]])
+      expect(analyst.position).to eq(3)
+
+      expect(operator.move_down).to be(true)
+      expect(order).to eq([['Admin', 1], ['Analyst', 2], ['Operator', 3], ['Manager', 4]])
+      expect(manager.reload).to be_valid
+    end
+
+    it 'moves the first ordinary role no higher and the last one no lower' do
+      first, last = create_roles('Operator', 'Manager')
+
+      expect(first).not_to be_movable_up
+      expect(first).to be_movable_down
+      expect(last).to be_movable_up
+      expect(last).not_to be_movable_down
+      expect(first.move_up).to be(false)
+      expect(last.move_down).to be(false)
+      expect(order).to eq([['Admin', 1], ['Operator', 2], ['Manager', 3]])
+    end
+
+    it 'renumbers the whole list gapless when a role moves' do
+      create_roles('Operator', 'Manager', 'Analyst')
+      connection = described_class.connection
+      connection.execute("UPDATE roles SET position = 9 WHERE name = 'Manager'")
+      connection.execute("UPDATE roles SET position = 5 WHERE name = 'Analyst'")
+
+      described_class.find_by!(name: 'Operator').move_down
+
+      expect(order).to eq([['Admin', 1], ['Analyst', 2], ['Operator', 3], ['Manager', 4]])
+    end
+
+    it 'closes the gap a deleted role leaves' do
+      _, manager = create_roles('Operator', 'Manager', 'Analyst')
+
+      manager.destroy!
+
+      expect(order).to eq([['Admin', 1], ['Operator', 2], ['Analyst', 3]])
     end
   end
 
   it 'cannot be deleted while a subject holds it' do
-    role = create_role('Operator', 1)
+    role, = create_roles('Operator')
     role.role_assignments.create!(subject: User.create!(email: 'a@example.com'))
 
     expect(role.destroy).to be(false)
@@ -71,7 +154,7 @@ RSpec.describe Pundit::Matrix::Role do
 
     it 'deletes its permissions with it' do
       Pundit::Matrix.screens.draw { screen :orders }
-      role = create_role('Operator', 1)
+      role, = create_roles('Operator')
       role.permissions.create!(screen: 'orders', level: 'read')
 
       expect { role.destroy }.to change(Pundit::Matrix::Permission, :count).by(-1)
@@ -90,7 +173,7 @@ RSpec.describe Pundit::Matrix::Role do
   describe '#levels' do
     include_context 'with fresh configuration'
 
-    let(:role) { described_class.create!(name: 'Operator', position: 2) }
+    let(:role) { described_class.create!(name: 'Operator') }
 
     before do
       Pundit::Matrix.screens.draw do
@@ -140,7 +223,6 @@ RSpec.describe Pundit::Matrix::Role do
       'id',
       'name',
       'position',
-      'admin',
       'created_at',
       'updated_at'
     )
@@ -149,7 +231,7 @@ RSpec.describe Pundit::Matrix::Role do
 
   it 'hides every column from an actor who does not manage roles, as any of them would reveal role holders' do
     operator = User.create!(email: 'operator@example.com')
-    operator.roles << described_class.create!(name: 'Operator', position: 2)
+    operator.roles << described_class.create!(name: 'Operator')
 
     Pundit::Matrix::Current.set(actor: operator) { expect(described_class.ransackable_attributes).to be_empty }
   end

@@ -37,7 +37,7 @@ RSpec.describe Pundit::Matrix::Policy do
   before { Pundit::Matrix.screens.draw { screen :orders } }
 
   def give(level)
-    role = Pundit::Matrix::Role.create!(name: 'Operator', position: 1)
+    role = Pundit::Matrix::Role.create!(name: 'Operator')
     role.permissions.create!(screen: 'orders', level:)
     user.roles << role
   end
@@ -121,7 +121,7 @@ RSpec.describe Pundit::Matrix::Policy do
     end
 
     it 'keeps what the policy defines itself' do
-      user.roles << Pundit::Matrix::Role.create!(name: 'Reader', position: 2, levels: { reports: 'read' })
+      user.roles << Pundit::Matrix::Role.create!(name: 'Reader', levels: { reports: 'read' })
 
       expect(setting_policy.new(user, :setting).export?).to be(true)
     end
@@ -141,7 +141,7 @@ RSpec.describe Pundit::Matrix::Policy do
 
     it 'lets admins and superadmins read it and nobody write it' do
       admin = User.create!(email: 'admin@example.com')
-      admin.roles << Pundit::Matrix::Role.create!(name: 'Admin', position: 1, admin: true)
+      admin.roles << Pundit::Matrix::Role.admin_role
       superadmin = User.create!(email: 'super@example.com', superadmin: true)
       grant_levels(user, orders: :write)
 

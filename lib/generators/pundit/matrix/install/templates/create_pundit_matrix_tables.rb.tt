@@ -1,9 +1,12 @@
 class CreatePunditMatrixTables < ActiveRecord::Migration[<%= migration_version %>]
+  class Role < ActiveRecord::Base
+    self.table_name = '<%= table_prefix %>roles'
+  end
+
   def change
     create_table :<%= table_prefix %>roles<%= ", id: :#{primary_key_type}" if primary_key_type %> do |t|
       t.string :name, null: false
       t.integer :position, null: false
-      t.boolean :admin, null: false, default: false
       t.timestamps
 
       t.index :name, unique: true
@@ -35,5 +38,8 @@ class CreatePunditMatrixTables < ActiveRecord::Migration[<%= migration_version %
 
       t.index %i[subject_type subject_id role_id], unique: true
     end
+
+    # The role at position 1 is the admin role.
+    up_only { Role.create!(name: <%= admin_role_name.inspect %>, position: 1) }
   end
 end

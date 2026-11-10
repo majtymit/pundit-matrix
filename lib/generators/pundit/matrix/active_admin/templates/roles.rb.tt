@@ -6,15 +6,29 @@ ActiveAdmin.register Pundit::Matrix::Role, as: 'Role', namespace: :<%= namespace
   end
 
   controller do
-    helper_method :role_policy
+    helper_method :role_policy, :role_order_shown?
 
     def role_policy
       Pundit.policy!(current_active_admin_user, [:<%= namespace %>, Pundit::Matrix::Role])
     end
+
+    # Moving a role in a filtered or reordered list would pass neighbours the list does not show.
+    def role_order_shown?
+      params[:q].blank? && params.fetch(:order, 'position_asc') == 'position_asc'
+    end
+  end
+
+  member_action :move_up, method: :put do
+    resource.move_up
+    redirect_to collection_path
+  end
+
+  member_action :move_down, method: :put do
+    resource.move_down
+    redirect_to collection_path
   end
 
   filter :name
-  filter :admin
 
   sidebar :superadmin, only: :index, if: -> { !<%= subject_name %>.active_superadmins.exists? } do
     render 'pundit/matrix/superadmin_warning', subjects: <%= subject_name %>
@@ -22,8 +36,17 @@ ActiveAdmin.register Pundit::Matrix::Role, as: 'Role', namespace: :<%= namespace
 
   index do
     column :name
-    column :position
-    column :admin
+    column :position do |role|
+      span role.position
+      if role_order_shown?
+        if role.movable_up? && authorized?(:move_up, role)
+          a '↑', href: move_up_<%= namespace %>_role_path(role), 'data-method': :put, title: Pundit::Matrix.t('move_up')
+        end
+        if role.movable_down? && authorized?(:move_down, role)
+          a '↓', href: move_down_<%= namespace %>_role_path(role), 'data-method': :put, title: Pundit::Matrix.t('move_down')
+        end
+      end
+    end
     actions
   end
 
@@ -31,7 +54,6 @@ ActiveAdmin.register Pundit::Matrix::Role, as: 'Role', namespace: :<%= namespace
     attributes_table do
       row :name
       row :position
-      row :admin
     end
 
     panel Pundit::Matrix::Role.human_attribute_name(:permissions) do
@@ -44,8 +66,7 @@ ActiveAdmin.register Pundit::Matrix::Role, as: 'Role', namespace: :<%= namespace
 
     f.inputs do
       f.input :name
-      f.input :position
-      f.input :admin if role_policy.permitted_attributes.include?(:admin)
+      f.input :position, input_html: { disabled: true }
     end
 
     f.inputs Pundit::Matrix::Role.human_attribute_name(:permissions) do
