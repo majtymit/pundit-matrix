@@ -4,6 +4,7 @@ en:
     admin_role_name: Admin
     no_superadmin: Nobody is an active superadmin yet. Until someone is, nobody can give the admin role or manage admins.
     holder_count: Holders
+    ungrouped: General
     holders: Held by
     no_holders: Nobody holds this role.
     move_up: Move up

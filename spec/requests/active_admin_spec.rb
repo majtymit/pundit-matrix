@@ -232,6 +232,27 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
       expect(page.at_css('#role_position')).to have_attributes(to_h: include('value' => '3', 'disabled' => 'disabled'))
     end
 
+    it 'puts the matrix into the form as one more labelled input, as wide as its levels' do
+      as(admin, :get, "/admin/roles/#{manager.id}/edit")
+
+      inputs = page.css('form fieldset.inputs')
+      matrix = inputs.at_css('li.pundit-matrix-levels')
+      expect(inputs.size).to eq(1)
+      expect(inputs.css('> ol > li').map { |item| item['class'].split.first }).to eq(%w[string number input])
+      expect(matrix['id']).to eq('role_levels_input')
+      expect(matrix['class']).to eq('input optional pundit-matrix-levels')
+      expect(matrix.at_css('> label.label').text).to eq('Permissions')
+      expect(matrix.at_css('table')['class']).to eq('pundit-matrix')
+    end
+
+    it 'shows the admin role like any other, with the levels it really has' do
+      as(admin, :get, "/admin/roles/#{Pundit::Matrix::Role.admin_role.id}")
+
+      read_only, writable = Pundit::Matrix.screens.partition(&:read_only?)
+      expect(page.css('table.pundit-matrix td.pundit-matrix-write').size).to eq(writable.size)
+      expect(page.css('table.pundit-matrix td.pundit-matrix-read').size).to eq(read_only.size)
+    end
+
     it 'offers no edit of the admin role, not even to a superadmin' do
       admin_role = Pundit::Matrix::Role.admin_role
 
@@ -246,14 +267,26 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
       expect(admin_role.reload.name).to eq('Admin')
     end
 
+    def breadcrumb
+      page.css('.breadcrumb a').map { |link| [link.text, link['href']] }
+    end
+
     it 'names the roles in the breadcrumb after the model' do
-      allow(Pundit::Matrix::Role.model_name).to receive(:human).and_call_original
-      allow(Pundit::Matrix::Role.model_name).to receive(:human).with(count: 2).and_return('Roly')
+      plural = { one: 'Roll', other: 'Rolls' }
+      I18n.backend.store_translations(:en, activerecord: { models: { 'pundit/matrix/role': plural } })
 
       as(admin, :get, "/admin/roles/#{manager.id}/edit")
 
-      expect(page.css('.breadcrumb a').map { |link| [link.text, link['href']] })
-        .to eq([['Admin', '/admin'], ['Roly', '/admin/roles'], ['Manager', "/admin/roles/#{manager.id}"]])
+      expect(breadcrumb)
+        .to eq([['Admin', '/admin'], ['Rolls', '/admin/roles'], ['Manager', "/admin/roles/#{manager.id}"]])
+    ensure
+      I18n.backend.reload!
+    end
+
+    it 'falls back to the plural of the model name without a translation' do
+      as(admin, :get, "/admin/roles/#{manager.id}")
+
+      expect(breadcrumb).to eq([['Admin', '/admin'], ['Roles', '/admin/roles']])
     end
 
     describe 'who holds a role' do

@@ -12,7 +12,7 @@ module Pundit
       end
 
       def group_label
-        I18n.t("pundit_matrix.groups.#{group}", default: group.to_s.humanize) if group
+        group ? I18n.t("pundit_matrix.groups.#{group}", default: group.to_s.humanize) : Pundit::Matrix.t('ungrouped')
       end
     end
   end

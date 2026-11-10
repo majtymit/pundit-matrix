@@ -7,8 +7,9 @@ ActiveAdmin.register Pundit::Matrix::Role, as: 'Role', namespace: :<%= namespace
 
   # ActiveAdmin names the roles crumb after activerecord.models.role, which the namespaced model does not answer.
   breadcrumb do
+    roles = Pundit::Matrix::Role.model_name
     breadcrumb_links.tap do |links|
-      links[1] = link_to(Pundit::Matrix::Role.model_name.human(count: 2), collection_path) if links[1]
+      links[1] = link_to(roles.human(count: 2, default: roles.human.pluralize), collection_path) if links[1]
     end
   end
 
@@ -72,8 +73,9 @@ ActiveAdmin.register Pundit::Matrix::Role, as: 'Role', namespace: :<%= namespace
       row :position
     end
 
+    # Inside .attributes_table, the levels line up with the details above them.
     panel Pundit::Matrix::Role.human_attribute_name(:permissions) do
-      render 'pundit/matrix/levels', role: resource, table_class: 'index_table'
+      div(class: 'attributes_table') { render 'pundit/matrix/levels', role: resource }
     end
 
     if holders_shown?
@@ -94,10 +96,7 @@ ActiveAdmin.register Pundit::Matrix::Role, as: 'Role', namespace: :<%= namespace
     f.inputs do
       f.input :name
       f.input :position, input_html: { disabled: true }
-    end
-
-    f.inputs Pundit::Matrix::Role.human_attribute_name(:permissions) do
-      li { render 'pundit/matrix/levels_fields', role: f.object, table_class: 'index_table' }
+      f.matrix_levels_input
     end
 
     f.actions

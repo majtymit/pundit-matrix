@@ -73,7 +73,7 @@ Pundit::Matrix.setup_superadmin!(User.find_by!(email: 'you@example.com'))
 
 ## Screens
 
-Declare your screens in `config/initializers/pundit_matrix.rb`. Groups are optional and only order the matrix.
+Declare your screens in `config/initializers/pundit_matrix.rb`. Groups are optional and only order the matrix; once there is one, screens outside every group are listed under General (`pundit_matrix.ungrouped`).
 
 ```ruby
 Pundit::Matrix.configure do |config|
@@ -146,7 +146,7 @@ Roles are an ordinary model, `Pundit::Matrix::Role`, with `name` and `position` 
 
 ### The admin role
 
-The role at position 1 is the admin role, `Pundit::Matrix::Role.admin_role`, and nothing else marks it. It has every screen and no matrix. Its position never changes, it never moves, and `destroy` refuses it whoever calls it, from the console too. As no other role can get position 1, there is never a second one. Its name comes from the install and the policy lets nobody edit it, superadmins included, since there is nothing left to change.
+The role at position 1 is the admin role, `Pundit::Matrix::Role.admin_role`, and nothing else marks it. It has every screen without rows of its own: its detail shows the highest level of each screen, and its form has no matrix. Its position never changes, it never moves, and `destroy` refuses it whoever calls it, from the console too. As no other role can get position 1, there is never a second one. Its name comes from the install and the policy lets nobody edit it, superadmins included, since there is nothing left to change.
 
 ### Positions
 
@@ -170,7 +170,25 @@ Put the matrix into the role form and onto the role detail:
 <%= render 'pundit/matrix/levels', role: @role %>
 ```
 
-Both are plain tables that take your admin's look; pass `table_class:` to use its table style, for example `table_class: 'index_table'` in ActiveAdmin. They bring a small inline style scoped to `.pundit-matrix` (a line between rows, bold group headings with more space above them, centred levels in the form), with the nonce of your content security policy when it has one.
+Both are plain tables that take your admin's look; pass `table_class:` to use its table style. On the detail, screen names are row headers, so inside ActiveAdmin's `div.attributes_table` (as the generated screen renders it) the levels line up with the details above. `role.level(screen)` gives the level the detail shows. In an ActiveAdmin role form, `f.matrix_levels_input` inside `f.inputs` adds the matrix as one more labelled input, as wide as the text inputs above it.
+
+### Customizing the look
+
+The matrix brings a small inline style made for ActiveAdmin's default theme, with the nonce of your content security policy when it has one: a line between rows and centred levels in the form (on the detail the attributes table draws the rows), bold group headings with more space above them, write in green, read in orange and a dash for no access on the detail. Its rules are kept at low specificity, so one rule in your own stylesheet overrides any of them:
+
+- `.pundit-matrix` – the table, in the form and on the detail
+- `.pundit-matrix-levels` – the form field holding it, where the table is as wide as ActiveAdmin's text inputs, `calc(80% - 22px)`
+- `.pundit-matrix-level` – the level columns of the form, 20% each, the rest going to the screen names
+- `.pundit-matrix-write`, `.pundit-matrix-read`, `.pundit-matrix-none` – the levels on the detail
+- `th[scope="rowgroup"]` – the group headings
+
+A theme with other input widths sets the matrix to match. arctic_admin, for one, gives its inputs 50%:
+
+```scss
+.pundit-matrix-levels .pundit-matrix { width: 50%; }
+```
+
+On the detail, the column of screen names is ActiveAdmin's `.attributes_table th`; widen it in your stylesheet and the details and the matrix follow together.
 
 The form sends `role[levels][orders]=read`, so `@role.update(permitted_attributes(@role))` saves it. For another parameter name, pass `scope: 'pundit_matrix_role'` to the partial.
 
@@ -385,6 +403,7 @@ sk:
     move_down: Posunúť nižšie
     holder_count: Počet osôb
     holders: Držitelia
+    ungrouped: Všeobecné
     no_holders: Túto rolu nemá nikto.
     levels:
       none: Žiadny prístup

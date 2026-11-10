@@ -13,10 +13,23 @@ RSpec.describe 'pundit/matrix/_style' do
     %w[levels levels_fields].each do |partial|
       style = render_partial(partial).at_css('style').text
 
-      expect(style.scan(/^\s*(\S[^{]*?)\s*\{/).flatten).to all(start_with('.pundit-matrix')), partial
-      expect(style).to include('.pundit-matrix th[scope="rowgroup"] { padding-top: 1.75em; text-align: left;')
-      expect(style).to include('border-bottom: 1px solid')
+      expect(style.scan(/([^{}]+)\{/).flatten.map(&:strip)).to all(start_with('.pundit-matrix')), partial
+      expect(style).to match(/\.pundit-matrix th\[scope="rowgroup"\] \{\s+padding-top: 1\.75em; text-align: left;/)
     end
+  end
+
+  it 'draws row lines in the form only, as the attributes table of the detail draws its own' do
+    style = render_partial('levels').at_css('style').text
+    lined = style.scan(/([^{}]+)\{[^{}]*border-bottom/).flatten.join.split(',').map(&:strip)
+
+    expect(lined).to eq(['.pundit-matrix-levels .pundit-matrix thead th', '.pundit-matrix-levels .pundit-matrix td'])
+  end
+
+  it 'lines the form matrix up with the text inputs and gives each level a fixed share' do
+    style = render_partial('levels_fields').at_css('style').text
+
+    expect(style).to include('.pundit-matrix-levels .pundit-matrix { width: calc(80% - 22px); }')
+    expect(style).to include('.pundit-matrix .pundit-matrix-level { width: 20%; text-align: center; }')
   end
 
   it 'centres the levels of the form' do

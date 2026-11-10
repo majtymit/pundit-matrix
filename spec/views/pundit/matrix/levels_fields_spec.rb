@@ -20,7 +20,7 @@ RSpec.describe 'pundit/matrix/_levels_fields' do
   it 'offers every level of every screen, grouped' do
     html = render_fields(role:)
 
-    expect(html.css('tbody th[scope=rowgroup]').map(&:text)).to eq(['Sales'])
+    expect(html.css('tbody th[scope=rowgroup]').map(&:text)).to eq(%w[Sales General])
     expect(html.css('tbody tr td:first-child').map(&:text)).to eq(['Orders', 'Audit log', 'Invoices'])
     expect(html.css('input[name="role[levels][orders]"]').map { |input| input['value'] })
       .to eq(%w[none read write])

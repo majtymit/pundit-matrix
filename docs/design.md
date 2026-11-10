@@ -77,7 +77,8 @@ change whose roles and gives the host app the answers.
 - Cannot be deleted by anyone, superadmins included, and never moves.
 - Nobody edits it, superadmins included: its name comes from the install, its position is fixed and it has every
   permission. Only a superadmin assigns it.
-- Gets every permission automatically, including screens added later. It has no row in the matrix.
+- Gets every permission automatically, including screens added later. It has no rows in the matrix; its detail shows
+  the highest level of every screen, so it reads like any other role.
 - Is the only role (besides superadmin) that can manage roles and the matrix. Roles are not a screen in the matrix,
   so managing them cannot be granted to an ordinary role by mistake.
 - Cannot touch superadmins or subjects with the admin role, whatever the positions.
@@ -185,9 +186,15 @@ matrix consistent with the positions is the job of whoever edits it, and only ad
   `render 'pundit/matrix/levels', role:` on the role detail. The form sends `levels: { orders: 'read' }`, the host
   permits `levels: {}` and the model saves it.
 - Widgets are plain HTML without a layout, so they take the look of the admin they are in. `table_class:` adds the
-  admin's own table class; screen names are plain cells, because admins style every `th` as a header. The matrix
+  admin's own table class. In the form, screen names are plain cells, because admins style every `th` as a header;
+  on the detail they are row headers, so inside ActiveAdmin's `.attributes_table` they line up with the details
+  above. The look targets ActiveAdmin's default theme; another theme is the app's to override. The matrix
   brings only an inline style scoped to `.pundit-matrix` for what makes it readable (row lines, group headings,
-  centred levels), inline so no asset pipeline is involved, with the CSP nonce when the host has one.
+  centred levels, write and read in their own colours, a dash for no access), inline so no asset pipeline is
+  involved, with the CSP nonce when the host has one. In ActiveAdmin the role form takes the matrix as one more
+  labelled input (`f.matrix_levels_input`), not as a full-width section.
+- Once a screen has a group, screens without one get the heading General, so they do not read as part of the group
+  above them.
 - Who holds a role (`role.holders`, `Role.holder_counts`) is shown only to those who manage roles.
 - `render 'pundit/matrix/superadmin_warning', subjects: User` warns on the roles screen while nobody is an active
   superadmin.

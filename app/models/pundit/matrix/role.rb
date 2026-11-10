@@ -44,6 +44,10 @@ module Pundit
         role_assignments.includes(:subject).map(&:subject)
       end
 
+      def level(screen)
+        admin? ? screen.levels.last : levels.fetch(screen.key, :none)
+      end
+
       def levels
         permissions.reject(&:marked_for_destruction?).to_h do |permission|
           [permission.screen.to_sym, permission.level.to_sym]

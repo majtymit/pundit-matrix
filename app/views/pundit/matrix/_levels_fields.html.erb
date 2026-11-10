@@ -13,10 +13,10 @@
         <% end %>
       </tr>
     </thead>
-    <% Pundit::Matrix.screens.group_by(&:group).each do |group, screens| %>
+    <% Pundit::Matrix.screens.by_group.each do |group_label, screens| %>
       <tbody>
-        <% if group %>
-          <tr><th scope="rowgroup" colspan="<%= Pundit::Matrix::LEVELS.size + 1 %>"><%= screens.first.group_label %></th></tr>
+        <% if group_label %>
+          <tr><th scope="rowgroup" colspan="<%= Pundit::Matrix::LEVELS.size + 1 %>"><%= group_label %></th></tr>
         <% end %>
         <% screens.each do |screen| %>
           <% current = role.levels.fetch(screen.key, :none) %>

@@ -1,21 +1,24 @@
 <% table_class = local_assigns[:table_class] %>
-<% if role.admin? %>
-  <p class="pundit-matrix-admin"><%= Pundit::Matrix.t('admin_role') %></p>
-<% else %>
-  <%= render 'pundit/matrix/style' %>
-  <table class="<%= class_names('pundit-matrix', table_class) %>">
-    <% Pundit::Matrix.screens.group_by(&:group).each do |group, screens| %>
-      <tbody>
-        <% if group %>
-          <tr><th scope="rowgroup" colspan="2"><%= screens.first.group_label %></th></tr>
-        <% end %>
-        <% screens.each do |screen| %>
-          <tr>
-            <td><%= screen.label %></td>
-            <td><%= Pundit::Matrix.t("levels.#{role.levels.fetch(screen.key, :none)}") %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    <% end %>
-  </table>
-<% end %>
+<%= render 'pundit/matrix/style' %>
+<table class="<%= class_names('pundit-matrix', table_class) %>">
+  <% Pundit::Matrix.screens.by_group.each do |group_label, screens| %>
+    <tbody>
+      <% if group_label %>
+        <tr><th scope="rowgroup" colspan="2"><%= group_label %></th></tr>
+      <% end %>
+      <% screens.each do |screen| %>
+        <% level = role.level(screen) %>
+        <tr>
+          <th scope="row"><%= screen.label %></th>
+          <td class="pundit-matrix-<%= level %>">
+            <% if level == :none %>
+              <span title="<%= Pundit::Matrix.t('levels.none') %>">–</span>
+            <% else %>
+              <%= Pundit::Matrix.t("levels.#{level}") %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  <% end %>
+</table>
