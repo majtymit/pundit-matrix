@@ -272,8 +272,9 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
         as(admin, :get, '/admin/roles')
 
         ActiveSupport::Notifications.unsubscribe(subscriber)
-        shown = page.css('tbody tr').to_h { |row| [row.at_css('.col-name').text, row.at_css('.col-held_by').text] }
+        shown = page.css('tbody tr').to_h { |row| [row.at_css('.col-name').text, row.at_css('.col-holders').text] }
         expect(shown).to eq('Admin' => '2', 'Operator' => '1', 'Manager' => '2')
+        expect(page.at_css('th.col-holders').text).to eq(Pundit::Matrix.t('holder_count'))
         expect(counts.size).to eq(1)
       end
 
@@ -285,6 +286,7 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
 
         as(admin, :get, "/admin/roles/#{manager.id}")
 
+        expect(page.css('.panel h3').map(&:text)).to include(Pundit::Matrix.t('holders'))
         expect(page.css('.panel li').map { |item| [item.text, item.at_css('a')&.[]('href')] })
           .to eq([['luke@example.com', "/admin/users/#{luke.id}"]])
       end

@@ -383,6 +383,7 @@ sk:
     no_superadmin: Zatiaľ nie je žiadny aktívny superadmin.
     move_up: Posunúť vyššie
     move_down: Posunúť nižšie
+    holder_count: Počet osôb
     holders: Držitelia
     no_holders: Túto rolu nemá nikto.
     levels:

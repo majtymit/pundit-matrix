@@ -62,7 +62,7 @@ ActiveAdmin.register Pundit::Matrix::Role, as: 'Role', namespace: :<%= namespace
         end
       end
     end
-    column(Pundit::Matrix.t('holders')) { |role| holder_counts.fetch(role.id, 0) } if holders_shown?
+    column(Pundit::Matrix.t('holder_count')) { |role| holder_counts.fetch(role.id, 0) } if holders_shown?
     actions
   end
 
