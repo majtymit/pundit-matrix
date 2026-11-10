@@ -45,7 +45,7 @@ class UserPolicy < ApplicationPolicy
 end
 ```
 
-Without ActiveAdmin, your subject form renders `pundit/matrix/subject_fields`, your controller permits `permitted_subject_attributes`, and your roles screen renders the matrix ([Managing roles](#managing-roles), [Managing subjects](#managing-subjects)). With ActiveAdmin, the generator writes the roles screen and the subject form needs `f.matrix_subject_inputs`, see [ActiveAdmin](#activeadmin).
+Without ActiveAdmin, your subject form renders `pundit/matrix/subject_fields`, your controller permits `permitted_subject_attributes`, and your roles screen renders the matrix ([Managing roles](#managing-roles), [Managing subjects](#managing-subjects)). With ActiveAdmin, the gem registers the roles screen and the subject form needs `f.matrix_subject_inputs`, see [ActiveAdmin](#activeadmin).
 
 ## Subjects
 
@@ -155,7 +155,7 @@ current_user.access.everything?  # an admin or a superadmin, who manages roles a
 
 ## Managing roles
 
-Roles are an ordinary model, `Pundit::Matrix::Role`, with `name` and `position` (unique, 1 is the highest). The ActiveAdmin generator builds the screen; in another admin, build it like any other resource. `Pundit::Matrix::RolePolicy` lets admins and superadmins manage and move ordinary roles; nobody edits the admin role. Pundit finds it through `RolePolicy` (or `Admin::RolePolicy` in a namespace), which the generators create, because the role answers `policy_class`. Permit what the policy allows: `permitted_attributes` gives `name` and `levels`, never `position`. A role held by a subject cannot be deleted.
+Roles are an ordinary model, `Pundit::Matrix::Role`, with `name` and `position` (unique, 1 is the highest). With ActiveAdmin the gem registers the screen ([The roles screen](#the-roles-screen)); in another admin, build it like any other resource. `Pundit::Matrix::RolePolicy` lets admins and superadmins manage and move ordinary roles; nobody edits the admin role. Pundit finds it through `RolePolicy` (or `Admin::RolePolicy` in a namespace), which the generators create, because the role answers `policy_class`. Permit what the policy allows: `permitted_attributes` gives `name` and `levels`, never `position`. A role held by a subject cannot be deleted.
 
 ### The admin role
 
@@ -174,7 +174,7 @@ role.move_down
 
 A move renumbers every ordinary role gapless (2, 3, 4…) in one transaction, and deleting a role closes its gap the same way. Saving a changed position is refused, and a position passed to `create` is replaced by the next free one. Authorize moves with the policy's `move_up?` and `move_down?`.
 
-Show the arrows only on a list that is not filtered and is ordered by position, otherwise a move passes neighbours nobody sees. The generated ActiveAdmin screen does that and shows the position in its form as a disabled field.
+Show the arrows only on a list that is not filtered and is ordered by position, otherwise a move passes neighbours nobody sees. The roles screen the gem registers in ActiveAdmin does that and shows the position in its form as a disabled field.
 
 Put the matrix into the role form and onto the role detail:
 
@@ -183,7 +183,7 @@ Put the matrix into the role form and onto the role detail:
 <%= render 'pundit/matrix/levels', role: @role %>
 ```
 
-Both are plain tables that take your admin's look; pass `table_class:` to use its table style. On the detail, screen names are row headers, so inside ActiveAdmin's `div.attributes_table` (as the generated screen renders it) the levels line up with the details above. `role.level(screen)` gives the level the detail shows. In an ActiveAdmin role form, `f.matrix_levels_input` inside `f.inputs` adds the matrix as one more labelled input, as wide as the text inputs above it.
+Both are plain tables that take your admin's look; pass `table_class:` to use its table style. On the detail, screen names are row headers, so inside ActiveAdmin's `div.attributes_table` (as the gem's roles screen renders it) the levels line up with the details above. `role.level(screen)` gives the level the detail shows. In an ActiveAdmin role form, `f.matrix_levels_input` inside `f.inputs` adds the matrix as one more labelled input, as wide as the text inputs above it.
 
 ### Customizing the look
 
@@ -299,13 +299,13 @@ or a superadmin. To filter subjects by role, add `roles` and `role_assignments` 
 
 The adapter loads only when the app has ActiveAdmin (3.x with `ActiveAdmin::PunditAdapter`); the rest of the gem does not need it. `bin/rails generate pundit:matrix:active_admin User` (`--namespace` defaults to `admin`), also run by the install generator:
 
-- creates the roles screen `app/admin/roles.rb` with the matrix, the missing superadmin warning, move arrows in the position column, the number of holders on the index and their list on the detail (linked where the actor may open them), and the translated model name in the breadcrumb, and `Admin::RolePolicy`
+- creates `Admin::RolePolicy`, the policy ActiveAdmin finds for roles; the roles screen itself comes from the gem ([The roles screen](#the-roles-screen))
 - creates `Admin::ActiveAdmin::PagePolicy`, which reads what each page declares; when you let it replace a page policy of your own, it reminds you that what that policy decided now belongs in each `register_page`
 - turns `screen` into `subject_screen` in `Admin::UserPolicy`
 - points `config.on_unauthorized_access` to `:pundit_matrix_access_denied`, unless you have a handler of your own
 - declares the Dashboard open to everyone signed in
 - adds `matrix_subject` to `ActiveAdmin.register User`
-- writes `spec/requests/admin/pundit_matrix_screens_spec.rb` when the app has specs
+- writes the short `spec/requests/admin/pundit_matrix_screens_spec.rb` when the app has specs ([The screens spec](#the-screens-spec))
 
 and lists what it could not do. What stays yours:
 
@@ -335,6 +335,28 @@ ActiveAdmin.register_page 'Reports' do
   screen :reports
 end
 ```
+
+### The roles screen
+
+The gem registers the roles screen in ActiveAdmin's default namespace, as `ActiveAdmin.register Pundit::Matrix::Role` at `/admin/roles`: the matrix in the form and on the detail, the missing superadmin warning, move arrows in the position column, the number of holders on the index and their list on the detail (linked where the actor may open them), and the translated model name in the breadcrumb. It is open to admins and superadmins only. It is the gem's code, so a new version brings its changes and the gem's own specs cover it; your app neither copies nor tests it.
+
+To change the menu or another small thing, reopen it in a file of your own, such as `app/admin/roles.rb`:
+
+```ruby
+ActiveAdmin.register Pundit::Matrix::Role do
+  menu parent: 'access', priority: 2
+end
+```
+
+The gem registers its screen before ActiveAdmin loads your files, on every load, a reload in development included, so what the block sets wins whatever the file is called. A role registration without `as:` is named `Role`, so the block reopens the gem's screen instead of adding a second one at `/admin/pundit_matrix_roles`. What the block declares goes next to what the gem declares: `menu`, `config.sort_order`, `index`, `show` or `form` replace the gem's, while a `filter`, `sidebar`, `action_item` or `member_action` is added to them.
+
+For a screen of your own, eject it:
+
+```bash
+bin/rails generate pundit:matrix:roles_screen
+```
+
+The generator copies the gem's screen into `app/admin/roles.rb` and sets `config.roles_screen = false` in `config/initializers/pundit_matrix.rb`, so the gem no longer registers its own. From then on the screen is your app's code: a new version of the gem does not change it, and testing and maintaining it are yours, like any other file in `app/admin`. Eject it also to put it in another namespace than the default one, and add `namespace:` to the registration.
 
 ### Subjects
 
@@ -380,7 +402,29 @@ When the app already sets `on_unauthorized_access`, the generator keeps it and o
 
 ### The screens spec
 
-The generated spec walks every resource and page of the namespace. Each one needs a screen, an admin screen or an open screen. Without the level its address is refused; with read it opens, the menu shows only screens with that key, and it offers no change and no action. With write it offers what an admin gets, and actions of another screen go to whoever writes there. It also fails when a screen sits under two menu parents, when a read-only screen offers an action that needs write (`create`, `update` or `destroy` the controller defines and the policy, asked about the class, does not switch off, a member or collection action other than GET, or a page action other than GET), and when a writable screen has no such action, so its write level would grant nothing. An action of another screen (`actions_of_screen`) counts for that screen. Read-only stays declared, never inferred from the actions, so a new action never quietly opens a write level. List what knowingly stays outside the matrix in `outside_the_matrix`; the checks leave it out too. Without Devise, fill in `create_subject` and `sign_in`.
+`require 'pundit/matrix/rspec'` brings the shared examples `'Pundit::Matrix screens'`, which hold every resource and page of a namespace to the matrix. The generator writes `spec/requests/admin/pundit_matrix_screens_spec.rb`, which holds only what your app decides:
+
+```ruby
+require 'rails_helper'
+require 'pundit/matrix/rspec'
+
+RSpec.describe 'Pundit::Matrix screens of admin', type: :request do
+  include Devise::Test::IntegrationHelpers
+
+  it_behaves_like 'Pundit::Matrix screens',
+                  namespace: :admin,
+                  except: %w[Comment],
+                  create_subject: -> { create(:user) }
+end
+```
+
+- `namespace` – the ActiveAdmin namespace the examples walk; ActiveAdmin's default namespace when left out.
+- `except` – the names of the resources and pages that knowingly stay outside the matrix, such as ActiveAdmin's comments; every check leaves them out. Empty when left out.
+- `create_subject` – builds a new subject without roles. The examples call it many times and run it inside the example, so FactoryBot's `create` and your own helpers work there.
+
+The examples sign subjects in with `sign_in(subject)`, which Devise's `IntegrationHelpers` give. Without Devise, define `sign_in` in the spec; the generated one has a stub that says so.
+
+Each resource and page needs a screen, an admin screen or an open screen. Without the level its address is refused; with read it opens, the menu shows only screens with that key, and it offers no change and no action. With write it offers what an admin gets, and actions of another screen go to whoever writes there. Admin screens open to admins only and open screens to everyone signed in. The examples also fail when a screen sits under two menu parents, when a read-only screen offers an action that needs write (`create`, `update` or `destroy` the controller defines and the policy, asked about the class, does not switch off, a member or collection action other than GET, or a page action other than GET), and when a writable screen has no such action, so its write level would grant nothing. An action of another screen (`actions_of_screen`) counts for that screen. Read-only stays declared, never inferred from the actions, so a new action never quietly opens a write level. A failure names the screen, or the screen and action, that broke.
 
 ## Testing
 
@@ -460,6 +504,15 @@ Levels of screens you no longer declare are ignored; delete them whenever you li
 ```ruby
 Pundit::Matrix::Permission.where.not(screen: Pundit::Matrix.screens.map(&:key)).delete_all
 ```
+
+## Upgrading from 0.6.0
+
+The roles screen and the screens checks moved into the gem, so your app no longer keeps copies of them.
+
+- Delete `app/admin/roles.rb` unless you changed more than its menu. If you changed only the menu, keep it as a reopening block with just your `menu` line, see [The roles screen](#the-roles-screen). If you changed more, run `bin/rails generate pundit:matrix:roles_screen`, let it overwrite the file, and port your changes into it; it also sets `config.roles_screen = false`.
+- A roles screen generated for another namespace than ActiveAdmin's default one has to be ejected the same way, with `namespace:` kept in the registration.
+- Replace `spec/requests/admin/pundit_matrix_screens_spec.rb` with the short one from [The screens spec](#the-screens-spec): `outside_the_matrix` becomes `except:`, the body of `create_subject` becomes `create_subject:`, and a `sign_in` of your own stays in the spec.
+- Drop `app/admin/roles.rb` from your coverage filters if you excluded it there.
 
 ## Development
 

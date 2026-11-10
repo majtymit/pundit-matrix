@@ -172,17 +172,19 @@ matrix consistent with the positions is the job of whoever edits it, and only ad
   without ActiveAdmin, where nothing else would find roles. It reads the schema to check the model and the existing tables, but never runs migrations
   or changes the database.
 - When the app has ActiveAdmin, the install generator also runs `rails generate pundit:matrix:active_admin User`. It
-  stays available on its own for an app that adds ActiveAdmin later. It writes the roles screen and the role and page
-  policies, wires the refusal handler, opens the dashboard, adds `matrix_subject` to the subject resource and writes
-  a screens spec, and lists whatever it could not do. ActiveAdmin is not a dependency of the gem.
+  stays available on its own for an app that adds ActiveAdmin later. It writes the role and page policies, wires the
+  refusal handler, opens the dashboard, adds `matrix_subject` to the subject resource and writes a short screens
+  spec, and lists whatever it could not do. ActiveAdmin is not a dependency of the gem.
+- No generator copies gem code into the app. The roles screen and the screens checks stay in the gem, so a release
+  never asks for regenerated files and the app's coverage never counts them.
 - Neither generator touches `db/seeds.rb`.
 - There is no uninstall. Removing the gem is the project's own job.
 
 ## UI
 
 - The gem has no pages, controllers or routes of its own. Roles are an ordinary model, so the host manages them as a
-  resource in its own admin (`ActiveAdmin.register Pundit::Matrix::Role` or a plain controller), and lists, forms and
-  styling stay native to that admin.
+  resource in its own admin, and lists, forms and styling stay native to that admin. With ActiveAdmin the gem
+  registers that resource itself; elsewhere the host builds it like any other.
 - The gem never asks who is signed in. Its policies get the subject from Pundit, and the rules on saving take it from
   `pundit_user`, so whatever the host passes there (`current_user`, `current_admin_user`) works without
   configuration.
@@ -224,10 +226,19 @@ ActiveAdmin app would otherwise find out the hard way:
   adapter finds it through the scope.
 - A refusal sends someone with a screen back and someone with none to the dashboard, which the generator declares
   open. Signing out instead is the host's choice: it points `on_unauthorized_access` to its own handler.
-- The generated screens spec walks every resource and page: each has a screen, an admin screen or an open screen;
-  without the level the address is refused, with read it opens and the menu shows only it and nothing can be changed,
-  and with write it offers what an admin gets. It also fails on a screen under two menu parents and on levels that
-  do not match the actions: a read-only screen with an action needing write, a writable one without any.
+- The roles screen is registered from the gem's own file in ActiveAdmin's `before_load` hook, so it comes before the
+  app's files on every load, a reload included, and an app file reopening it (`menu` and other small changes) always
+  wins. Registering roles without `as:` names them `Role`, because ActiveAdmin would otherwise name the engine's model
+  `Pundit::Matrix::Role` and a reopening block would add a second screen. An app wanting a different screen ejects it
+  with `rails generate pundit:matrix:roles_screen`, which copies that file into `app/admin/roles.rb` and sets
+  `config.roles_screen = false`; the copy is the app's code from then on. Ejecting is explicit rather than detected,
+  because a reopening file and an ejected one register the same resource.
+- The screens checks are shared examples in the gem (`require 'pundit/matrix/rspec'`). The app's spec gives only the
+  namespace, what stays outside the matrix and how to create a subject. They walk every resource and page: each has
+  a screen, an admin screen or an open screen; without the level the address is refused, with read it opens and the
+  menu shows only it and nothing can be changed, and with write it offers what an admin gets. They also fail on a
+  screen under two menu parents and on levels that do not match the actions: a read-only screen with an action
+  needing write, a writable one without any.
 
 ### Tests
 
