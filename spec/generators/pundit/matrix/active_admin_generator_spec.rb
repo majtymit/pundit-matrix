@@ -177,6 +177,9 @@ RSpec.describe Pundit::Matrix::ActiveAdminGenerator do
       expect(spec).to include('include Devise::Test::IntegrationHelpers')
       expect(spec).to include('create(:user)')
       expect(spec).to include('ActiveAdmin.application.namespaces[:admin]')
+      expect(spec).to include('expect(screen_map.conflicts).to be_empty')
+      expect(spec).to include('ScreenMap.new(namespace, except: outside_the_matrix)')
+      expect(spec).to include('expect(screen_map.level_mismatches(create_subject)).to be_empty')
       expect(spec).not_to include('NotImplementedError')
       expect(output).not_to include('Adjust `create_subject`')
     end

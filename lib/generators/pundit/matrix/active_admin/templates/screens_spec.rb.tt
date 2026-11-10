@@ -14,6 +14,14 @@ RSpec.describe 'Pundit::Matrix screens of <%= namespace %>', type: :request do
     expect(screens.reject { |screen| screen[:access] }.map { |screen| screen[:name] }).to be_empty
   end
 
+  it 'places every screen under one menu parent, so the matrix takes its group from the menu' do
+    expect(screen_map.conflicts).to be_empty
+  end
+
+  it 'offers write on a screen exactly when one of its actions needs write' do
+    expect(screen_map.level_mismatches(create_subject)).to be_empty
+  end
+
   it 'refuses a screen without its level' do
     screens_with(:screen).each do |screen|
       sign_in grant_levels(create_subject, **other_screen_read(screen[:key]))
@@ -104,11 +112,19 @@ RSpec.describe 'Pundit::Matrix screens of <%= namespace %>', type: :request do
   end
 <% end -%>
 
+  def namespace
+    ActiveAdmin.application.namespaces[:<%= namespace %>]
+  end
+
+  def screen_map
+    Pundit::Matrix::ActiveAdmin::ScreenMap.new(namespace, except: outside_the_matrix)
+  end
+
   def screens
-    @screens ||= ActiveAdmin.application.namespaces[:<%= namespace %>].resources.filter_map do |resource|
+    @screens ||= namespace.resources.filter_map do |resource|
       next if resource.resource_name.to_s.in?(outside_the_matrix)
 
-      kind, key = access_of(resource)
+      kind, key = Pundit::Matrix::ActiveAdmin::Registration.new(resource).access
       {
         name: resource.resource_name.to_s,
         access: kind,
@@ -122,15 +138,6 @@ RSpec.describe 'Pundit::Matrix screens of <%= namespace %>', type: :request do
 
   def screens_with(kind)
     screens.select { |screen| screen[:access] == kind }
-  end
-
-  def access_of(resource)
-    return resource.matrix_access if resource.is_a?(ActiveAdmin::Page)
-
-    policy = adapter(resource, nil).retrieve_policy(resource.resource_class).class
-    return [:screen, policy.matrix_screen] if policy.respond_to?(:matrix_screen)
-
-    [:admin] if policy.try(:matrix_admin_screen?)
   end
 
   def adapter(resource, subject)

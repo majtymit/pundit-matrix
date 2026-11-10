@@ -1,7 +1,7 @@
 module Admin
   class WidgetPolicy < ApplicationPolicy
     screen :widgets
-    actions_of_screen :reports, :publish
+    actions_of_screen :users, :publish
 
     class Scope < ApplicationPolicy::Scope
       def resolve
