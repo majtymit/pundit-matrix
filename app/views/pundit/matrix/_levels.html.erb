@@ -2,6 +2,7 @@
 <% if role.admin? %>
   <p class="pundit-matrix-admin"><%= Pundit::Matrix.t('admin_role') %></p>
 <% else %>
+  <%= render 'pundit/matrix/style' %>
   <table class="<%= class_names('pundit-matrix', table_class) %>">
     <% Pundit::Matrix.screens.group_by(&:group).each do |group, screens| %>
       <tbody>

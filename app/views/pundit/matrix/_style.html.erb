@@ -1,0 +1,7 @@
+<%# Inline, so the matrix reads the same in any admin without touching its asset pipeline. %>
+<style <%= tag.attributes(nonce: content_security_policy_nonce) %>>
+  .pundit-matrix { border-collapse: collapse; }
+  .pundit-matrix td { padding: 0.5em 0.75em; border-bottom: 1px solid rgba(127, 127, 127, 0.25); }
+  .pundit-matrix th[scope="rowgroup"] { padding-top: 1.75em; text-align: left; font-weight: bold; }
+  .pundit-matrix .pundit-matrix-level { text-align: center; }
+</style>

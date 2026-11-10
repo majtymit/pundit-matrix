@@ -74,8 +74,7 @@ module Pundit
       # Run from the install generator, it hands its steps over, so the developer reads one list.
       def show_next_steps
         next_steps = [
-          "Put the roles into the #{subject_name} form, inside `f.inputs`: " \
-          "`li { render 'pundit/matrix/subject_fields', subject: f.object }`.",
+          "Put the roles into the #{subject_name} form, inside `f.inputs`: `f.matrix_subject_inputs`.",
           'Declare a screen in every other `register_page`: `screen :key`, `admin_screen` or `open_screen`.',
           *steps,
         ]

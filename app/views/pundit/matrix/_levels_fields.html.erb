@@ -3,12 +3,13 @@
 <% if role.admin? %>
   <p class="pundit-matrix-admin"><%= Pundit::Matrix.t('admin_role') %></p>
 <% else %>
+  <%= render 'pundit/matrix/style' %>
   <table class="<%= class_names('pundit-matrix', table_class) %>">
     <thead>
       <tr>
         <th></th>
         <% Pundit::Matrix::LEVELS.each do |level| %>
-          <th scope="col"><%= Pundit::Matrix.t("levels.#{level}") %></th>
+          <th scope="col" class="pundit-matrix-level"><%= Pundit::Matrix.t("levels.#{level}") %></th>
         <% end %>
       </tr>
     </thead>
@@ -22,7 +23,7 @@
           <tr>
             <td><%= screen.label %></td>
             <% Pundit::Matrix::LEVELS.each do |level| %>
-              <td>
+              <td class="pundit-matrix-level">
                 <% if screen.levels.include?(level) %>
                   <%= radio_button_tag "#{scope}[levels][#{screen.key}]", level, current == level,
                                        'aria-label': "#{screen.label}: #{Pundit::Matrix.t("levels.#{level}")}" %>

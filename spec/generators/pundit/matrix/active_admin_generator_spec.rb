@@ -89,7 +89,7 @@ RSpec.describe Pundit::Matrix::ActiveAdminGenerator do
   it 'names the steps it could not do' do
     output = run_generator
 
-    expect(output).to include("li { render 'pundit/matrix/subject_fields', subject: f.object }")
+    expect(output).to include('inside `f.inputs`: `f.matrix_subject_inputs`')
     expect(output).to include('Admin::UserPolicy with `subject_screen :users`')
     expect(output).to include('`screen :key`, `admin_screen` or `open_screen`')
     expect(output).to include('Point `config.on_unauthorized_access`')

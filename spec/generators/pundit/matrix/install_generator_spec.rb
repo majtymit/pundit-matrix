@@ -68,7 +68,7 @@ RSpec.describe Pundit::Matrix::InstallGenerator do
 
       steps = next_steps(output)
       expect(steps.first).to eq('Run the migrations.')
-      expect(steps.index { |step| step.include?('subject_fields') })
+      expect(steps.index { |step| step.include?('matrix_subject_inputs') })
         .to be_between(steps.index { |step| step.include?('screen :key') }, steps.size - 2)
       expect(steps.last).to eq('Make someone a superadmin: bin/rails pundit_matrix:superadmin EMAIL=you@example.com')
     end

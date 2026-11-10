@@ -145,6 +145,45 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
       expect(luke.reload).to be_superadmin
     end
 
+    describe 'the role inputs of the form' do
+      def form
+        Nokogiri::HTML(response.body).at_css('form#edit_user')
+      end
+
+      def role_boxes
+        form.css('li.check_boxes input[type=checkbox][name="user[role_ids][]"]')
+      end
+
+      it 'puts the roles among the other inputs, stacked in order, with the ones the actor cannot assign disabled' do
+        manager_role = Pundit::Matrix::Role.create!(name: 'Manager')
+        luke.roles << manager_role
+
+        as(admin, :get, "/admin/users/#{luke.id}/edit")
+
+        expect(form.css('fieldset.inputs > ol > li').map { |item| item['class'].split.first })
+          .to eq(%w[email check_boxes])
+        expect(form.css('li.check_boxes label').map { |label| label.text.strip })
+          .to include('Admin', 'Operator', 'Manager')
+        expect(role_boxes.map { |box| [box['value'], box['checked'].present?, box['disabled'].present?] }).to eq(
+          [
+            [Pundit::Matrix::Role.admin_role.id.to_s, false, true],
+            [operator_role.id.to_s, true, false],
+            [manager_role.id.to_s, true, false],
+          ]
+        )
+        expect(form.css('input[type=hidden][name="user[role_ids][]"]').map { |input| input['value'] }).to eq([''])
+        expect(form.css('[name="user[superadmin]"]')).to be_empty
+      end
+
+      it 'adds the superadmin flag below the roles for a superadmin' do
+        as(superadmin, :get, "/admin/users/#{luke.id}/edit")
+
+        expect(form.css('fieldset.inputs > ol > li').map { |item| item['class'].split.first })
+          .to eq(%w[email check_boxes boolean])
+        expect(role_boxes.select { |box| box['disabled'] }).to be_empty
+      end
+    end
+
     it 'leaves a request without the subject alone' do
       as(admin, :patch, "/admin/users/#{luke.id}")
 
