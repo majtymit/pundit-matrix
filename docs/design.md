@@ -75,7 +75,8 @@ change whose roles and gives the host app the answers.
 - Created by the install migration, so the roles screen has it right after migrating. A database loaded from the
   schema has none, so the superadmin task and `make_admin` create it when it is missing.
 - Cannot be deleted by anyone, superadmins included, and never moves.
-- Only a superadmin renames it or assigns it.
+- Nobody edits it, superadmins included: its name comes from the install, its position is fixed and it has every
+  permission. Only a superadmin assigns it.
 - Gets every permission automatically, including screens added later. It has no row in the matrix.
 - Is the only role (besides superadmin) that can manage roles and the matrix. Roles are not a screen in the matrix,
   so managing them cannot be granted to an ordinary role by mistake.
@@ -177,18 +178,22 @@ matrix consistent with the positions is the job of whoever edits it, and only ad
   `pundit_user`, so whatever the host passes there (`current_user`, `current_admin_user`) works without
   configuration.
 - The host's role policy inherits from `Pundit::Matrix::RolePolicy`: only admins and superadmins manage and move
-  ordinary roles, only a superadmin renames the admin role, nobody deletes it, and no one is permitted a position. The role answers `policy_class` with `RolePolicy`, because Pundit would otherwise
+  ordinary roles, nobody edits or deletes the admin role, and no one is permitted a position. The role answers `policy_class` with `RolePolicy`, because Pundit would otherwise
   look for `Admin::Pundit::Matrix::RolePolicy` in a namespace, and a module `Admin::Pundit` would hide `::Pundit`
   inside the host's admin code.
 - The matrix is a widget: `render 'pundit/matrix/levels_fields', role:` in the role form and
   `render 'pundit/matrix/levels', role:` on the role detail. The form sends `levels: { orders: 'read' }`, the host
   permits `levels: {}` and the model saves it.
-- Widgets are plain HTML without a layout or CSS, so they take the look of the admin they are in. `table_class:` adds
-  the admin's own table class; screen names are plain cells, because admins style every `th` as a header.
+- Widgets are plain HTML without a layout, so they take the look of the admin they are in. `table_class:` adds the
+  admin's own table class; screen names are plain cells, because admins style every `th` as a header. The matrix
+  brings only an inline style scoped to `.pundit-matrix` for what makes it readable (row lines, group headings,
+  centred levels), inline so no asset pipeline is involved, with the CSP nonce when the host has one.
+- Who holds a role (`role.holders`, `Role.holder_counts`) is shown only to those who manage roles.
 - `render 'pundit/matrix/superadmin_warning', subjects: User` warns on the roles screen while nobody is an active
   superadmin.
 - `render 'pundit/matrix/subject_fields', subject: @user` gives the subject form a checkbox per role, with the roles
-  the actor cannot assign disabled, and the superadmin checkbox for a superadmin.
+  the actor cannot assign disabled, and the superadmin checkbox for a superadmin. In ActiveAdmin,
+  `f.matrix_subject_inputs` gives the same as ordinary formtastic inputs, so the roles align with the other fields.
 
 ### ActiveAdmin
 

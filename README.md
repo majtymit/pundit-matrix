@@ -45,7 +45,7 @@ class UserPolicy < ApplicationPolicy
 end
 ```
 
-Without ActiveAdmin, your subject form renders `pundit/matrix/subject_fields`, your controller permits `permitted_subject_attributes`, and your roles screen renders the matrix ([Managing roles](#managing-roles), [Managing subjects](#managing-subjects)). With ActiveAdmin, the generator writes the roles screen and the subject form needs one line, see [ActiveAdmin](#activeadmin).
+Without ActiveAdmin, your subject form renders `pundit/matrix/subject_fields`, your controller permits `permitted_subject_attributes`, and your roles screen renders the matrix ([Managing roles](#managing-roles), [Managing subjects](#managing-subjects)). With ActiveAdmin, the generator writes the roles screen and the subject form needs `f.matrix_subject_inputs`, see [ActiveAdmin](#activeadmin).
 
 ## Subjects
 
@@ -142,11 +142,11 @@ current_user.access.everything?  # an admin or a superadmin, who manages roles a
 
 ## Managing roles
 
-Roles are an ordinary model, `Pundit::Matrix::Role`, with `name` and `position` (unique, 1 is the highest). The ActiveAdmin generator builds the screen; in another admin, build it like any other resource. `Pundit::Matrix::RolePolicy` lets admins and superadmins manage and move ordinary roles, and only a superadmin renames the admin role. Pundit finds it through `RolePolicy` (or `Admin::RolePolicy` in a namespace), which the generators create, because the role answers `policy_class`. Permit what the policy allows: `permitted_attributes` gives `name` and `levels`, never `position`. A role held by a subject cannot be deleted.
+Roles are an ordinary model, `Pundit::Matrix::Role`, with `name` and `position` (unique, 1 is the highest). The ActiveAdmin generator builds the screen; in another admin, build it like any other resource. `Pundit::Matrix::RolePolicy` lets admins and superadmins manage and move ordinary roles; nobody edits the admin role. Pundit finds it through `RolePolicy` (or `Admin::RolePolicy` in a namespace), which the generators create, because the role answers `policy_class`. Permit what the policy allows: `permitted_attributes` gives `name` and `levels`, never `position`. A role held by a subject cannot be deleted.
 
 ### The admin role
 
-The role at position 1 is the admin role, `Pundit::Matrix::Role.admin_role`, and nothing else marks it. It has every screen and no matrix. Its position never changes, it never moves, and `destroy` refuses it whoever calls it, from the console too. As no other role can get position 1, there is never a second one.
+The role at position 1 is the admin role, `Pundit::Matrix::Role.admin_role`, and nothing else marks it. It has every screen and no matrix. Its position never changes, it never moves, and `destroy` refuses it whoever calls it, from the console too. As no other role can get position 1, there is never a second one. Its name comes from the install and the policy lets nobody edit it, superadmins included, since there is nothing left to change.
 
 ### Positions
 
@@ -170,9 +170,11 @@ Put the matrix into the role form and onto the role detail:
 <%= render 'pundit/matrix/levels', role: @role %>
 ```
 
-Both are plain tables that take your admin's look; pass `table_class:` to use its table style, for example `table_class: 'index_table'` in ActiveAdmin.
+Both are plain tables that take your admin's look; pass `table_class:` to use its table style, for example `table_class: 'index_table'` in ActiveAdmin. They bring a small inline style scoped to `.pundit-matrix` (a line between rows, bold group headings with more space above them, centred levels in the form), with the nonce of your content security policy when it has one.
 
 The form sends `role[levels][orders]=read`, so `@role.update(permitted_attributes(@role))` saves it. For another parameter name, pass `scope: 'pundit_matrix_role'` to the partial.
+
+Who holds a role is for those who manage roles. `role.holders` lists its subjects and `Pundit::Matrix::Role.holder_counts(roles)` counts them for a whole list in one query, keyed by role id; show them only when `access.everything?`.
 
 Warn on the roles screen while nobody is an active superadmin:
 
@@ -264,7 +266,7 @@ or a superadmin. To filter subjects by role, add `roles` and `role_assignments` 
 
 The adapter loads only when the app has ActiveAdmin (3.x with `ActiveAdmin::PunditAdapter`); the rest of the gem does not need it. `bin/rails generate pundit:matrix:active_admin User` (`--namespace` defaults to `admin`), also run by the install generator:
 
-- creates the roles screen `app/admin/roles.rb` with the matrix, the missing superadmin warning and move arrows in the position column, and `Admin::RolePolicy`
+- creates the roles screen `app/admin/roles.rb` with the matrix, the missing superadmin warning, move arrows in the position column, the number of holders on the index and their list on the detail (linked where the actor may open them), and the translated model name in the breadcrumb, and `Admin::RolePolicy`
 - creates `Admin::ActiveAdmin::PagePolicy`, which reads what each page declares; when you let it replace a page policy of your own, it reminds you that what that policy decided now belongs in each `register_page`
 - turns `screen` into `subject_screen` in `Admin::UserPolicy`
 - points `config.on_unauthorized_access` to `:pundit_matrix_access_denied`, unless you have a handler of your own
@@ -289,7 +291,7 @@ ActiveAdmin.register User do
   form do |f|
     f.inputs do
       f.input :email
-      li { render 'pundit/matrix/subject_fields', subject: f.object }
+      f.matrix_subject_inputs
     end
     f.actions
   end
@@ -303,6 +305,8 @@ end
 ### Subjects
 
 `matrix_subject` adds the attributes the subject policy permits (`role_ids`, and `superadmin` for a superadmin) to whatever `permit_params` permits, and shows the roles in a sidebar on the detail. It also puts the role filter on the index for admins and superadmins only: it adds `filter :roles` when you have not declared it, and when you have (or ActiveAdmin adds it by default), it sets its `if:` to `access.everything?`, replacing any `if:` of your own. ActiveAdmin cannot render a filter that Ransack refuses, so without that the index would fail for everyone else ([Managing subjects](#managing-subjects)). The rest of your filters stay as they are.
+
+In the form, `f.matrix_subject_inputs` inside `f.inputs` adds the roles as formtastic check boxes, stacked in position order and aligned with your other inputs, with the roles the actor cannot assign disabled and a hidden empty value so every role can be unchecked, and below them the superadmin flag for a superadmin. Apps without ActiveAdmin render `pundit/matrix/subject_fields` instead.
 
 ### Pages
 
@@ -379,6 +383,8 @@ sk:
     no_superadmin: Zatiaľ nie je žiadny aktívny superadmin.
     move_up: Posunúť vyššie
     move_down: Posunúť nižšie
+    holders: Držitelia
+    no_holders: Túto rolu nemá nikto.
     levels:
       none: Žiadny prístup
       read: Čítanie
