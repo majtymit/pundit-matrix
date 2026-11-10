@@ -49,11 +49,11 @@ RSpec.describe Pundit::Matrix::Access do
     expect(user.access.level(:audit_log)).to eq(:read)
   end
 
-  it 'gives a superadmin everything without a role' do
-    user.update!(superadmin: true)
+  it 'gives a superadmin everything by the flag' do
+    superadmin = User.new(superadmin: true)
 
-    expect(user.access).to be_everything
-    expect(user.access.level(:invoices)).to eq(:write)
+    expect(superadmin.access).to be_everything
+    expect(superadmin.access.level(:invoices)).to eq(:write)
   end
 
   it 'ignores levels stored for a screen that is no longer declared' do

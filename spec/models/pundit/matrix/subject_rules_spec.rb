@@ -10,7 +10,8 @@ RSpec.describe Pundit::Matrix::Subject do
   let(:operator) { create_user('operator', operator_role) }
 
   def create_user(name, *roles, superadmin: false)
-    User.create!(email: "#{name}@example.com", superadmin:).tap { |user| user.roles << roles }
+    roles = [Pundit::Matrix::Role.admin_role, *roles] if superadmin
+    User.create!(email: "#{name}@example.com", superadmin:, roles:)
   end
 
   def as(actor, &)
@@ -112,13 +113,13 @@ RSpec.describe Pundit::Matrix::Subject do
 
   describe 'the superadmin flag' do
     it 'can be changed by a superadmin' do
-      as(superadmin) { expect(operator.update(superadmin: true)).to be(true) }
+      as(superadmin) { expect(admin.update(superadmin: true)).to be(true) }
     end
 
     it 'cannot be changed by anyone else' do
       as(admin) { expect(manager.update(superadmin: true)).to be(false) }
 
-      expect(manager.errors.full_messages).to eq(['Superadmin can be changed only by a superadmin'])
+      expect(manager.errors.full_messages).to include('Superadmin can be changed only by a superadmin')
       expect(manager.reload).not_to be_superadmin
     end
 
@@ -136,6 +137,27 @@ RSpec.describe Pundit::Matrix::Subject do
         superadmin.superadmin = false
         expect(superadmin.save).to be(true)
       end
+    end
+  end
+
+  describe 'the admin role of a superadmin' do
+    it 'is needed for the flag' do
+      expect(operator.update(superadmin: true)).to be(false)
+      expect(operator.errors[:superadmin]).to eq(['needs the admin role'])
+      expect(operator.reload).not_to be_superadmin
+    end
+
+    it 'cannot be taken from a superadmin' do
+      expect(superadmin.update(role_ids: [manager_role.id])).to be(false)
+      expect(superadmin.errors[:roles]).to eq(['must keep the admin role of a superadmin'])
+      expect(role_names(superadmin)).to eq(['Admin'])
+    end
+
+    it 'goes together with the flag, in either order' do
+      create_user('other-super', superadmin: true)
+
+      expect(superadmin.update(role_ids: [], superadmin: false)).to be(true)
+      expect(role_names(superadmin)).to be_empty
     end
   end
 end

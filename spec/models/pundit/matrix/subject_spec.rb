@@ -1,6 +1,7 @@
 RSpec.describe Pundit::Matrix::Subject do
-  def create_user(email, **)
-    User.create!(email:, **)
+  def create_user(email, superadmin: false, **)
+    roles = superadmin ? [Pundit::Matrix::Role.admin_role] : []
+    User.create!(email:, superadmin:, roles:, **)
   end
 
   it 'gives the subject its roles' do

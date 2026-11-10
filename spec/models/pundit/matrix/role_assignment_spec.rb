@@ -24,7 +24,7 @@ RSpec.describe Pundit::Matrix::RoleAssignment do
     admin.roles << Pundit::Matrix::Role.admin_role
     operator = User.create!(email: 'operator@example.com')
     operator.roles << Pundit::Matrix::Role.create!(name: 'Operator')
-    superadmin = User.create!(email: 'super@example.com', superadmin: true)
+    superadmin = make_superadmin(User.create!(email: 'super@example.com'))
 
     [admin, superadmin].each do |actor|
       Pundit::Matrix::Current.set(actor:) { expect(described_class.ransackable_attributes).to eq(['role_id']) }

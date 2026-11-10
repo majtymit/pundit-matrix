@@ -142,7 +142,7 @@ RSpec.describe Pundit::Matrix::Policy do
     it 'lets admins and superadmins read it and nobody write it' do
       admin = User.create!(email: 'admin@example.com')
       admin.roles << Pundit::Matrix::Role.admin_role
-      superadmin = User.create!(email: 'super@example.com', superadmin: true)
+      superadmin = make_superadmin(User.create!(email: 'super@example.com'))
       grant_levels(user, orders: :write)
 
       [admin, superadmin].each do |subject|

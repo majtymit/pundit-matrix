@@ -21,3 +21,5 @@ en:
       own_roles: Only a superadmin can change their own roles
       role_not_assignable: include %{role}, which you cannot assign
       superadmin_only: can be changed only by a superadmin
+      superadmin_without_admin_role: needs the admin role
+      admin_role_of_superadmin: must keep the admin role of a superadmin

@@ -32,7 +32,8 @@ RSpec.describe Pundit::Matrix::Policy::SubjectActions do
   before { Pundit::Matrix.screens.draw { screen :users } }
 
   def create_user(name, *roles, superadmin: false)
-    User.create!(email: "#{name}@example.com", superadmin:).tap { |user| user.roles << roles }
+    roles = [Pundit::Matrix::Role.admin_role, *roles] if superadmin
+    User.create!(email: "#{name}@example.com", superadmin:, roles:)
   end
 
   def give(level)

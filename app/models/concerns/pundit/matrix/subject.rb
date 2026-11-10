@@ -13,6 +13,7 @@ module Pundit
         before_destroy :keep_an_active_superadmin_on_destroy, prepend: true
         validate :role_change_allowed
         validate :superadmin_change_allowed
+        validate :superadmin_holds_admin_role
       end
 
       def access
@@ -64,6 +65,17 @@ module Pundit
         return if actor.nil? || actor.access.superadmin?
 
         errors.add(:superadmin, :superadmin_only, message: Pundit::Matrix.t('errors.superadmin_only'))
+      end
+
+      def superadmin_holds_admin_role
+        return if !superadmin? || roles.any?(&:admin?)
+
+        attribute, type = if will_save_change_to_attribute?(:superadmin)
+                            %i[superadmin superadmin_without_admin_role]
+                          else
+                            %i[roles admin_role_of_superadmin]
+                          end
+        errors.add(attribute, type, message: Pundit::Matrix.t("errors.#{type}"))
       end
 
       # Acting on itself, the subject must be judged by what is stored, not by the changes it is about to save.

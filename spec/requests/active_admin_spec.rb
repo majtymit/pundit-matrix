@@ -139,7 +139,8 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
     end
 
     it 'permits the superadmin flag to a superadmin' do
-      as(superadmin, :patch, "/admin/users/#{luke.id}", params: { user: { superadmin: '1' } })
+      role_ids = [Pundit::Matrix::Role.admin_role.id, operator_role.id]
+      as(superadmin, :patch, "/admin/users/#{luke.id}", params: { user: { superadmin: '1', role_ids: } })
 
       expect(luke.reload).to be_superadmin
     end

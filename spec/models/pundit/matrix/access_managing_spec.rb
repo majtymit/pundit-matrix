@@ -13,7 +13,8 @@ RSpec.describe Pundit::Matrix::Access do
   let(:nobody) { create_user('nobody') }
 
   def create_user(name, *roles, superadmin: false)
-    User.create!(email: "#{name}@example.com", superadmin:).tap { |user| user.roles << roles }
+    roles = [Pundit::Matrix::Role.admin_role, *roles] if superadmin
+    User.create!(email: "#{name}@example.com", superadmin:, roles:)
   end
 
   def managed_by(actor)
