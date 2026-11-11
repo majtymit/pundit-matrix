@@ -7,7 +7,7 @@ Every screen of your app is one permission with three levels: no access, read an
 You create as many roles as you need; the gem keeps them in order. Access comes in three kinds:
 
 - **Superadmin** – a flag on the subject, held only together with the admin role. Has everything and manages everyone, including other superadmins.
-- **The admin role** – one role, part of the gem, always first. Has every screen, including later ones, and manages roles and every subject below admin.
+- **The admin role** – one role, part of the gem, always first. Has every screen, including later ones, and manages roles (unless the app leaves them to superadmins) and every subject below admin.
 - **Ordinary roles** – every other role. Has what the matrix says and manages only subjects with a lower role.
 
 Requires Ruby 3.2+, Rails 7.2+ and Pundit 2.3+.
@@ -150,12 +150,23 @@ current_user.access.level(:orders)  # => :none, :read or :write
 current_user.access.read?(:orders)
 current_user.access.write?(:orders)
 current_user.access.any?         # read on at least one screen, always true for admins and superadmins
-current_user.access.everything?  # an admin or a superadmin, who manages roles and sees who holds them
+current_user.access.everything?  # an admin or a superadmin
+current_user.access.manage_roles?  # may manage roles and see who holds them, see Managing roles
 ```
 
 ## Managing roles
 
-Roles are an ordinary model, `Pundit::Matrix::Role`, with `name` and `position` (unique, 1 is the highest). With ActiveAdmin the gem registers the screen ([The roles screen](#the-roles-screen)); in another admin, build it like any other resource. `Pundit::Matrix::RolePolicy` lets admins and superadmins manage and move ordinary roles; nobody edits the admin role. Pundit finds it through `RolePolicy` (or `Admin::RolePolicy` in a namespace), which the generators create, because the role answers `policy_class`. Permit what the policy allows: `permitted_attributes` gives `name` and `levels`, never `position`. A role held by a subject cannot be deleted.
+Roles are an ordinary model, `Pundit::Matrix::Role`, with `name` and `position` (unique, 1 is the highest). With ActiveAdmin the gem registers the screen ([The roles screen](#the-roles-screen)); in another admin, build it like any other resource. `Pundit::Matrix::RolePolicy` lets those who manage roles manage and move ordinary roles; nobody edits the admin role. Pundit finds it through `RolePolicy` (or `Admin::RolePolicy` in a namespace), which the generators create, because the role answers `policy_class`. Permit what the policy allows: `permitted_attributes` gives `name` and `levels`, never `position`. A role held by a subject cannot be deleted.
+
+Roles are not a screen of the matrix, so no level opens them to an ordinary role, and `screen :roles` would grant nothing. Admins and superadmins manage roles and the matrix by default. To leave them to superadmins alone:
+
+```ruby
+Pundit::Matrix.configure do |config|
+  config.roles_managed_by = :superadmin # :admin by default
+end
+```
+
+Then only a superadmin lists, shows, creates, edits, deletes and moves roles, the role policy's scope is empty for anyone else, and the roles screen opens to superadmins only, with the holders of each role. Admins keep every screen and keep managing subjects. `access.manage_roles?` gives the same answer outside the policy.
 
 ### The admin role
 
@@ -207,7 +218,7 @@ On the detail, the column of screen names is ActiveAdmin's `.attributes_table th
 
 The form sends `role[levels][orders]=read`, so `@role.update(permitted_attributes(@role))` saves it. For another parameter name, pass `scope: 'pundit_matrix_role'` to the partial.
 
-Who holds a role is for those who manage roles. `role.holders` lists its subjects and `Pundit::Matrix::Role.holder_counts(roles)` counts them for a whole list in one query, keyed by role id; show them only when `access.everything?`.
+Who holds a role is for those who manage roles. `role.holders` lists its subjects and `Pundit::Matrix::Role.holder_counts(roles)` counts them for a whole list in one query, keyed by role id; show them only when `access.manage_roles?`.
 
 Warn on the roles screen while nobody is an active superadmin:
 
@@ -237,6 +248,20 @@ class UserPolicy < ApplicationPolicy
 
   def permitted_attributes
     [:email, :name, *permitted_subject_attributes]
+  end
+end
+```
+
+Write on the subject screen is safe to give an ordinary role: it changes only subjects below it and gives only roles below its own, and the subject model enforces that on every save, whatever form or API saves it ([Who acts](#who-acts)).
+
+When the app wants subjects managed by admins and superadmins only, declare `admin_subject_screen` instead of `subject_screen`. Listing, showing, creating and changing subjects is then theirs alone, and like `admin_screen` the screen never shows up in the matrix. `manage?` and `permitted_subject_attributes` stay as they are: a superadmin manages everyone, an admin everyone but other admins and superadmins. In your own actions, `read?` and `write?` mean an admin or a superadmin, while `write?(:invoices)` still asks the matrix about that screen:
+
+```ruby
+class UserPolicy < ApplicationPolicy
+  admin_subject_screen
+
+  def deactivate?
+    write? && manage? && !record.deactivated?
   end
 end
 ```
@@ -340,7 +365,7 @@ end
 
 ### The roles screen
 
-The gem registers the roles screen in ActiveAdmin's default namespace, as `ActiveAdmin.register Pundit::Matrix::Role` at `/admin/roles`: the matrix in the form and on the detail, the missing superadmin warning, move arrows in the position column, the number of holders on the index and their list on the detail (linked where the actor may open them), and the translated model name in the breadcrumb. It is open to admins and superadmins only. It is the gem's code, so a new version brings its changes and the gem's own specs cover it; your app neither copies nor tests it.
+The gem registers the roles screen in ActiveAdmin's default namespace, as `ActiveAdmin.register Pundit::Matrix::Role` at `/admin/roles`: the matrix in the form and on the detail, the missing superadmin warning, move arrows in the position column, the number of holders on the index and their list on the detail (linked where the actor may open them), and the translated model name in the breadcrumb. It is open to admins and superadmins only, or to superadmins only with `roles_managed_by = :superadmin`. It is the gem's code, so a new version brings its changes and the gem's own specs cover it; your app neither copies nor tests it.
 
 To change the menu or another small thing, reopen it in a file of your own, such as `app/admin/roles.rb`:
 
@@ -426,7 +451,7 @@ end
 
 The examples sign subjects in with `sign_in(subject)`, which Devise's `IntegrationHelpers` give. Without Devise, define `sign_in` in the spec; the generated one has a stub that says so.
 
-Each resource and page needs a screen, an admin screen or an open screen. Without the level its address is refused; with read it opens, the menu shows only screens with that key, and it offers no change and no action. With write it offers what an admin gets, and actions of another screen go to whoever writes there. Admin screens open to admins only and open screens to everyone signed in. The examples also fail when a screen sits under two menu parents, when a read-only screen offers an action that needs write (`create`, `update` or `destroy` the controller defines and the policy, asked about the class, does not switch off, a member or collection action other than GET, or a page action other than GET), and when a writable screen has no such action, so its write level would grant nothing. An action of another screen (`actions_of_screen`) counts for that screen. Read-only stays declared, never inferred from the actions, so a new action never quietly opens a write level. A failure names the screen, or the screen and action, that broke.
+Each resource and page needs a screen, an admin screen or an open screen. Without the level its address is refused; with read it opens, the menu shows only screens with that key, and it offers no change and no action. With write it offers what an admin gets, and actions of another screen go to whoever writes there. Admin screens, a subject screen declared with `admin_subject_screen` included, open to admins only and open screens to everyone signed in. With `roles_managed_by = :superadmin`, the roles screen opens to superadmins and is refused to admins. The examples also fail when a screen sits under two menu parents, when a read-only screen offers an action that needs write (`create`, `update` or `destroy` the controller defines and the policy, asked about the class, does not switch off, a member or collection action other than GET, or a page action other than GET), and when a writable screen has no such action, so its write level would grant nothing. An action of another screen (`actions_of_screen`) counts for that screen. Read-only stays declared, never inferred from the actions, so a new action never quietly opens a write level. A failure names the screen, or the screen and action, that broke.
 
 ## Testing
 
@@ -449,7 +474,7 @@ expect(Pundit::Matrix::Lint.policies_without_screen(ApplicationPolicy, except: [
 expect(Pundit::Matrix::Lint.unused_screens(ApplicationPolicy)).to be_empty
 ```
 
-The first lists the named policies built on `ApplicationPolicy` that declare neither a screen nor `admin_screen`, the second the declared screens no such policy uses.
+The first lists the named policies built on `ApplicationPolicy` that declare neither a screen nor `admin_screen` or `admin_subject_screen`, the second the declared screens no such policy uses.
 
 ## Translations
 

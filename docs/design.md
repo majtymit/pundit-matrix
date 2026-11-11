@@ -38,6 +38,9 @@ change whose roles and gives the host app the answers.
   The README shows how.
 - A screen too powerful for the matrix (an audit log of every record) is declared with `admin_screen`: admins and
   superadmins read it, nobody writes it, and it never appears in the matrix, so it cannot be granted by mistake.
+- A subject screen too powerful for the matrix is declared with `admin_subject_screen`: only admins and superadmins
+  list, show, create and change subjects there, it never appears in the matrix, and who manages whom stays as on any
+  subject screen.
 - Who may see the history of a record is the policy's `history?`, `write?` by default. The gem knows nothing about
   auditing and adds no level for it.
 - An action that belongs to another screen is declared with `actions_of_screen` and needs write on that screen, so
@@ -48,7 +51,7 @@ change whose roles and gives the host app the answers.
 | | Where it lives | Permissions | Can manage |
 |---|---|---|---|
 | **Superadmin** | the host's subject, read by the gem | everything | everyone, including itself and other superadmins |
-| **Admin** | the one admin role, at position 1 | everything, including screens added later | roles, the matrix, and subjects without the admin role |
+| **Admin** | the one admin role, at position 1 | everything, including screens added later | roles and the matrix (unless left to superadmins), and subjects without the admin role |
 | **Ordinary role** | rows in the matrix | what the matrix says | subjects whose role is lower, if it has write on the subjects screen |
 
 ### Superadmin
@@ -87,7 +90,10 @@ change whose roles and gives the host app the answers.
 - Gets every permission automatically, including screens added later. It has no rows in the matrix; its detail shows
   the highest level of every screen, so it reads like any other role.
 - Is the only role (besides superadmin) that can manage roles and the matrix. Roles are not a screen in the matrix,
-  so managing them cannot be granted to an ordinary role by mistake.
+  so managing them cannot be granted to an ordinary role by mistake. An app can leave roles and the matrix to
+  superadmins alone (`config.roles_managed_by = :superadmin`, `:admin` by default); admins then keep every screen and
+  the subjects. One setting covers the role policy with its scope, the holders on the roles screen and the screens
+  checks, and `access.manage_roles?` answers it.
 - Cannot touch superadmins or subjects with the admin role, whatever the positions.
 - Cannot change its own roles.
 
@@ -114,7 +120,7 @@ change whose roles and gives the host app the answers.
 - Move arrows show only on an unfiltered list ordered by position, because elsewhere a move would pass neighbours
   nobody sees.
 - A role that is held by any subject cannot be deleted.
-- Changing a role's name, order or permissions is done on the roles screen (admins only).
+- Changing a role's name, order or permissions is done on the roles screen, by those who manage roles.
 - The host app calls `has_roles` in its subject model. That gives the subject its roles and the validations above.
 - The assignment table allows several roles per subject from the start. With more than one, all permissions from
   all roles apply: for each screen the highest level from any of them, and the subject's position is that of its
@@ -151,16 +157,18 @@ way, positions are explicit.
   restricted, so data fixes and imports keep working.
 - An actor that changes itself is judged by what is stored, not by the change it is saving, so nobody grants
   themselves the flag or a role through their own record.
-- Who holds which role is visible to those who manage roles: admins and superadmins. While anyone else acts, Ransack
+- Who holds which role is shown on the roles screen to those who manage roles. Searching subjects by role stays
+  with admins and superadmins, who manage subjects either way. While anyone else acts, Ransack
   allows no column of a role or of an assignment, so a subject list cannot be searched by role (by its id, name,
   position). A host shows its role filter only when `access.everything?`, because ActiveAdmin cannot
   render a filter Ransack refuses. With no actor nothing is restricted.
 - The subject policy (`subject_screen`) adds `manage?` on the record to the screen levels: `show?` needs read,
   `update?` and `destroy?` need write. It gives the form `role_ids` for anyone who may edit and `superadmin` for a
-  superadmin. Custom actions (deactivate, reset password) use its public `manage?`.
+  superadmin. Custom actions (deactivate, reset password) use its public `manage?`. `admin_subject_screen` keeps all
+  of that and puts admins and superadmins in place of the levels.
 
 Positions and permissions are independent, so a lower role can have a permission a higher one lacks. Keeping the
-matrix consistent with the positions is the job of whoever edits it, and only admins edit it.
+matrix consistent with the positions is the job of whoever edits it, and only those who manage roles edit it.
 
 ## Installing into an existing project
 
@@ -188,8 +196,8 @@ matrix consistent with the positions is the job of whoever edits it, and only ad
 - The gem never asks who is signed in. Its policies get the subject from Pundit, and the rules on saving take it from
   `pundit_user`, so whatever the host passes there (`current_user`, `current_admin_user`) works without
   configuration.
-- The host's role policy inherits from `Pundit::Matrix::RolePolicy`: only admins and superadmins manage and move
-  ordinary roles, nobody edits or deletes the admin role, and no one is permitted a position. The role answers `policy_class` with `RolePolicy`, because Pundit would otherwise
+- The host's role policy inherits from `Pundit::Matrix::RolePolicy`: only those who manage roles (admins and
+  superadmins, or superadmins alone) manage and move ordinary roles, nobody edits or deletes the admin role, and no one is permitted a position. The role answers `policy_class` with `RolePolicy`, because Pundit would otherwise
   look for `Admin::Pundit::Matrix::RolePolicy` in a namespace, and a module `Admin::Pundit` would hide `::Pundit`
   inside the host's admin code.
 - The matrix is a widget: `render 'pundit/matrix/levels_fields', role:` in the role form and
@@ -235,7 +243,7 @@ ActiveAdmin app would otherwise find out the hard way:
   because a reopening file and an ejected one register the same resource.
 - The screens checks are shared examples in the gem (`require 'pundit/matrix/rspec'`). The app's spec gives only the
   namespace, what stays outside the matrix and how to create a subject. They walk every resource and page: each has
-  a screen, an admin screen or an open screen; without the level the address is refused, with read it opens and the
+  a screen, an admin screen or an open screen, and the roles screen opens to superadmins only when roles are theirs; without the level the address is refused, with read it opens and the
   menu shows only it and nothing can be changed, and with write it offers what an admin gets. They also fail on a
   screen under two menu parents and on levels that do not match the actions: a read-only screen with an action
   needing write, a writable one without any.
@@ -271,8 +279,8 @@ The gem:
 - resolving a subject's level for a screen
 - Pundit integration: the base policy calls `extend Pundit::Matrix::Policy`, each policy declares its screen with
   `screen :orders`; `index?` and `show?` need `read`, everything else needs `write` (`history?` included), custom
-  actions (run a job, import) are written as `def import? = write?`, and `admin_screen` and `actions_of_screen`
-  cover screens outside the matrix and actions of another screen
+  actions (run a job, import) are written as `def import? = write?`, and `admin_screen`, `admin_subject_screen` and
+  `actions_of_screen` cover screens outside the matrix and actions of another screen
 - the role policy, the matrix widget and the missing superadmin warning
 - the subject screen: its policy (`subject_screen`), the role fields of its form and the rules on saving roles, see
   [Who enforces what](#who-enforces-what)
