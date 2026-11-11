@@ -70,11 +70,12 @@ module Pundit
       def superadmin_holds_admin_role
         return if !superadmin? || roles.any?(&:admin?)
 
-        attribute, type = if will_save_change_to_attribute?(:superadmin)
-                            %i[superadmin superadmin_without_admin_role]
-                          else
-                            %i[roles admin_role_of_superadmin]
-                          end
+        attribute, type =
+          if will_save_change_to_attribute?(:superadmin)
+            %i[superadmin superadmin_without_admin_role]
+          else
+            %i[roles admin_role_of_superadmin]
+          end
         errors.add(attribute, type, message: Pundit::Matrix.t("errors.#{type}"))
       end
 

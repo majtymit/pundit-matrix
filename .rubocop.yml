@@ -1,38 +1,107 @@
-plugins:
-  - rubocop-rails
-  - rubocop-rspec
+# Omakase Ruby styling for Rails
+inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
 AllCops:
   TargetRubyVersion: 3.2
   TargetRailsVersion: 7.2
   NewCops: disable
-  SuggestExtensions: false
+
+# Omakase checks only the layout; these find real mistakes, such as an unused variable.
+Lint:
+  Enabled: true
+
+Security:
+  Enabled: true
+
+Layout/SpaceInsideArrayLiteralBrackets:
+  EnforcedStyle: no_space
+  Include:
+    - '**/*.rb'
 
 Style/StringLiterals:
   EnforcedStyle: single_quotes
-
-Style/StringLiteralsInInterpolation:
-  EnforcedStyle: single_quotes
-
-Style/Documentation:
-  Enabled: false
-
-RSpec/MultipleExpectations:
-  Enabled: false
-
-RSpec/ExampleLength:
-  Enabled: false
-
-RSpec/NestedGroups:
-  Max: 4
+  Include:
+    - '**/*.rb'
 
 Style/TrailingCommaInArrayLiteral:
   EnforcedStyleForMultiline: comma
+  Include:
+    - '**/*.rb'
 
 Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: comma
+  Include:
+    - '**/*.rb'
+
+Bundler/OrderedGems:
+  Enabled: true
+
+# If autocorrection is enabled, the following cops are recommended to further format the broken lines.
+# Together, these cops will pretty print hashes, arrays, method calls, etc.
+
+Layout/ArgumentAlignment:
+  Enabled: true
+
+Layout/ArrayAlignment:
+  Enabled: true
+
+Layout/AssignmentIndentation:
+  Enabled: true
+  IndentationWidth: 2
+
+Layout/BlockAlignment:
+  Enabled: true
+
+Layout/BlockEndNewline:
+  Enabled: true
+
+Layout/ClosingParenthesisIndentation:
+  Enabled: true
+
+Layout/EndAlignment:
+  Enabled: true
+
+Layout/FirstArgumentIndentation:
+  Enabled: true
+
+Layout/FirstArrayElementIndentation:
+  Enabled: true
+
+Layout/FirstHashElementIndentation:
+  Enabled: true
+
+Layout/FirstParameterIndentation:
+  Enabled: true
+
+Layout/HashAlignment:
+  Enabled: true
+
+Layout/IndentationConsistency:
+  Enabled: true
+  EnforcedStyle: normal
+
+Layout/IndentationStyle:
+  Enabled: true
+  EnforcedStyle: spaces
+
+Layout/IndentationWidth:
+  Enabled: true
+  Width: 2
+
+Layout/LineLength:
+  Enabled: true
+  Max: 120
+
+Layout/EmptyLines:
+  Enabled: true
 
 Layout/MultilineArrayLineBreaks:
+  Enabled: true
+
+Layout/MultilineBlockLayout:
+  Enabled: true
+
+Layout/MultilineHashBraceLayout:
   Enabled: true
 
 Layout/MultilineHashKeyLineBreaks:
@@ -44,18 +113,8 @@ Layout/MultilineMethodArgumentLineBreaks:
 Layout/MultilineMethodParameterLineBreaks:
   Enabled: true
 
-Style/FrozenStringLiteralComment:
-  Enabled: false
+Layout/ParameterAlignment:
+  Enabled: true
 
-Naming/PredicatePrefix:
-  AllowedMethods:
-    - has_roles
-
-RSpec/MultipleMemoizedHelpers:
-  Enabled: false
-
-# ActiveAdmin registrations and shared examples are DSL blocks as long as the screen or the checks they describe.
-Metrics/BlockLength:
-  AllowedMethods:
-    - register
-    - shared_examples
+Style/BlockDelimiters:
+  Enabled: true
