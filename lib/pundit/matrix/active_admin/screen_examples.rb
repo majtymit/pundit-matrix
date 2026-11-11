@@ -169,6 +169,21 @@ RSpec.shared_examples 'Pundit::Matrix screens' do |create_subject:,
     end
   end
 
+  it 'opens a superadmin screen to superadmins only' do
+    superadmin = make_superadmin(new_subject)
+    admin = make_admin(new_subject)
+
+    screens_with(:superadmin).each do |screen|
+      sign_in superadmin
+      get screen[:path]
+      expect(response).to have_http_status(:ok), screen[:name]
+
+      sign_in admin
+      get screen[:path]
+      expect(response).to have_http_status(:redirect), screen[:name]
+    end
+  end
+
   it 'opens an open screen to everyone signed in' do
     screens_with(:open).each do |screen|
       sign_in new_subject

@@ -25,6 +25,19 @@ RSpec.describe Pundit::Matrix do
 
       expect(described_class.screens.map(&:key)).to eq([:orders])
     end
+
+    it 'leaves roles to admins by default, or to superadmins only' do
+      expect(described_class.config.roles_managed_by).to eq(:admin)
+
+      described_class.configure { |config| config.roles_managed_by = 'superadmin' }
+
+      expect(described_class.config.roles_managed_by).to eq(:superadmin)
+    end
+
+    it 'refuses anyone else to manage roles' do
+      expect { described_class.config.roles_managed_by = :manager }
+        .to raise_error(ArgumentError, 'roles_managed_by is :admin or :superadmin, not :manager')
+    end
   end
 
   describe '.t' do

@@ -25,4 +25,7 @@ Pundit::Matrix.configure do |config|
     # end
 <% end -%>
   end
+
+  # Roles and the matrix are managed by admins and superadmins; :superadmin leaves them to superadmins only.
+  # config.roles_managed_by = :superadmin
 end

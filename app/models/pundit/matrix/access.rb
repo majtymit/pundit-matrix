@@ -26,6 +26,10 @@ module Pundit
         superadmin? || admin?
       end
 
+      def manage_roles?
+        Pundit::Matrix.config.roles_managed_by == :superadmin ? superadmin? : everything?
+      end
+
       def any?
         everything? || Pundit::Matrix.screens.any? { |screen| levels.key?(screen.key) }
       end

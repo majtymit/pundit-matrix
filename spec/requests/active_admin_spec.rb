@@ -401,6 +401,23 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
         expect(response.body).not_to include('luke@example.com', 'Held by')
       end
 
+      context 'when roles are managed by superadmins only' do
+        around do |example|
+          Pundit::Matrix.config.roles_managed_by = :superadmin
+          example.run
+        ensure
+          Pundit::Matrix.config.roles_managed_by = :admin
+        end
+
+        it 'shows the screen and its holders to a superadmin and refuses it to an admin' do
+          as(make_superadmin(User.create!(email: 'han@example.com')), :get, "/admin/roles/#{manager.id}")
+          expect(page.css('.panel li').map(&:text)).to eq(['luke@example.com'])
+
+          as(admin, :get, '/admin/roles')
+          expect(response).to redirect_to('/admin')
+        end
+      end
+
       it 'says when nobody holds a role' do
         as(admin, :get, "/admin/roles/#{operator.id}")
 

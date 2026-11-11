@@ -50,5 +50,31 @@ RSpec.describe Pundit::Matrix::RolePolicy do
 
   it 'is a screen for admins, outside the matrix' do
     expect(described_class).to be_matrix_admin_screen
+    expect(described_class).not_to be_matrix_superadmin_screen
+  end
+
+  context 'when roles are managed by superadmins only' do
+    include_context 'with fresh configuration'
+
+    before { Pundit::Matrix.config.roles_managed_by = :superadmin }
+
+    it 'lets a superadmin do everything with an ordinary role and an admin nothing' do
+      expect(allowed(superadmin, operator_role)).to eq(every_action)
+      expect(allowed(admin, operator_role)).to be_empty
+      expect(allowed(admin, admin_role)).to be_empty
+    end
+
+    it 'lists roles only for superadmins' do
+      operator_role
+
+      expect(described_class::Scope.new(superadmin, Pundit::Matrix::Role).resolve)
+        .to contain_exactly(admin_role, operator_role)
+      expect(described_class::Scope.new(admin, Pundit::Matrix::Role).resolve).to be_empty
+    end
+
+    it 'is a screen for superadmins, outside the matrix' do
+      expect(described_class).to be_matrix_superadmin_screen
+      expect(described_class).not_to be_matrix_admin_screen
+    end
   end
 end

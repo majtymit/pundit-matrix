@@ -33,7 +33,7 @@ ActiveAdmin.register Pundit::Matrix::Role do
     end
 
     def holders_shown?
-      current_active_admin_user.access.everything?
+      current_active_admin_user.access.manage_roles?
     end
 
     def holder_counts

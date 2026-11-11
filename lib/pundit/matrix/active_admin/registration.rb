@@ -18,7 +18,7 @@ module Pundit
           end
 
           %i[read? write? manage? assign?].each { |name| define_method(name) { |_other| true } }
-          %i[everything? any? superadmin?].each { |name| define_method(name) { true } }
+          %i[everything? any? superadmin? manage_roles?].each { |name| define_method(name) { true } }
         end
 
         attr_reader :resource
@@ -35,6 +35,7 @@ module Pundit
           return resource.matrix_access if page?
 
           return [:screen, policy_class.matrix_screen] if policy_class.respond_to?(:matrix_screen)
+          return [:superadmin] if policy_class.try(:matrix_superadmin_screen?)
 
           [:admin] if policy_class.try(:matrix_admin_screen?)
         end

@@ -58,6 +58,7 @@ RSpec.describe Pundit::Matrix::InstallGenerator do
     expect(initializer).to include('# screen :posts', '# screen :orders', '# screen :reports, read_only: true')
     expect(initializer).to include('#   screen :invoices')
     expect(initializer).to include('from the ActiveAdmin menu')
+    expect(initializer).to include("  # config.roles_managed_by = :superadmin\n")
   end
 
   it 'creates the admin role at position 1 in the migration, and no admin flag' do

@@ -16,4 +16,15 @@ RSpec.describe 'Pundit::Matrix screens of the admin', type: :request do
 
     it_behaves_like 'Pundit::Matrix screens', **screens
   end
+
+  context 'when roles are managed by superadmins only' do
+    around do |example|
+      Pundit::Matrix.config.roles_managed_by = :superadmin
+      example.run
+    ensure
+      Pundit::Matrix.config.roles_managed_by = :admin
+    end
+
+    it_behaves_like 'Pundit::Matrix screens', **screens
+  end
 end

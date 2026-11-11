@@ -4,7 +4,11 @@ module Pundit
       attr_reader :user, :record
 
       def self.matrix_admin_screen?
-        true
+        !matrix_superadmin_screen?
+      end
+
+      def self.matrix_superadmin_screen?
+        Pundit::Matrix.config.roles_managed_by == :superadmin
       end
 
       def initialize(user, record)
@@ -60,14 +64,14 @@ module Pundit
         end
 
         def resolve
-          @user&.access&.everything? ? @scope.all : @scope.none
+          @user&.access&.manage_roles? ? @scope.all : @scope.none
         end
       end
 
       private
 
       def manager?
-        user.present? && user.access.everything?
+        user.present? && user.access.manage_roles?
       end
     end
   end
