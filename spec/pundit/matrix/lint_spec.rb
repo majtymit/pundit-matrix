@@ -16,6 +16,7 @@ RSpec.describe Pundit::Matrix::Lint do
     stub_const('DefaultPolicy', Class.new(base))
     stub_const('DashboardPolicy', Class.new(base))
     stub_const('VersionPolicy', Class.new(base) { admin_screen })
+    stub_const('AccountPolicy', Class.new(base) { admin_subject_screen })
     Class.new(base)
   end
 

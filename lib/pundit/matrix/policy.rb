@@ -17,6 +17,13 @@ module Pundit
         define_singleton_method(:matrix_admin_screen?) { true }
       end
 
+      def admin_subject_screen
+        include Actions
+        include SubjectActions
+        include AdminSubjectActions
+        define_singleton_method(:matrix_admin_screen?) { true }
+      end
+
       # The actions get a default in a module of their own, so a method the policy defines itself still wins.
       def actions_of_screen(screen, *actions)
         screen = screen.to_sym
