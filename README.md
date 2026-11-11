@@ -172,6 +172,8 @@ role.move_up        # true when it moved
 role.move_down
 ```
 
+Each `movable_*?` call reads the positions of the ordinary roles. A list reads them once with `Role.ordinary_positions` (highest..lowest, nil without an ordinary role) and passes them in, `role.movable_up?(positions)`, so the arrows cost no query per row.
+
 A move renumbers every ordinary role gapless (2, 3, 4…) in one transaction, and deleting a role closes its gap the same way. Saving a changed position is refused, and a position passed to `create` is replaced by the next free one. Authorize moves with the policy's `move_up?` and `move_down?`.
 
 Show the arrows only on a list that is not filtered and is ordered by position, otherwise a move passes neighbours nobody sees. The roles screen the gem registers in ActiveAdmin does that and shows the position in its form as a disabled field.

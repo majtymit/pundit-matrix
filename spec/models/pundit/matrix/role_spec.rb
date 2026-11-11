@@ -121,6 +121,22 @@ RSpec.describe Pundit::Matrix::Role do
       expect(order).to eq([['Admin', 1], ['Operator', 2], ['Manager', 3]])
     end
 
+    it 'tells the moves from the positions a list reads once' do
+      first, middle, last = create_roles('Operator', 'Manager', 'Analyst')
+      positions = described_class.ordinary_positions
+
+      expect(positions).to eq(2..4)
+      expect([first, middle, last].map { |role| [role.movable_up?(positions), role.movable_down?(positions)] })
+        .to eq([[false, true], [true, true], [true, false]])
+      expect(admin_role.movable_down?(positions)).to be(false)
+    end
+
+    it 'moves nothing while there is no ordinary role' do
+      expect(described_class.ordinary_positions).to be_nil
+      expect(described_class.new(name: 'Operator')).not_to be_movable_up
+      expect(described_class.new(name: 'Operator')).not_to be_movable_down
+    end
+
     it 'renumbers the whole list gapless when a role moves' do
       create_roles('Operator', 'Manager', 'Analyst')
       connection = described_class.connection

@@ -14,7 +14,7 @@ ActiveAdmin.register Pundit::Matrix::Role do
   end
 
   controller do
-    helper_method :role_policy, :role_order_shown?, :holders_shown?, :holder_counts, :subjects
+    helper_method :role_policy, :role_order_shown?, :role_positions, :holders_shown?, :holder_counts, :subjects
 
     def role_policy
       active_admin_authorization.retrieve_policy(Pundit::Matrix::Role)
@@ -23,6 +23,13 @@ ActiveAdmin.register Pundit::Matrix::Role do
     # Moving a role in a filtered or reordered list would pass neighbours the list does not show.
     def role_order_shown?
       params[:q].blank? && params.fetch(:order, 'position_asc') == 'position_asc'
+    end
+
+    # Read from the table, not the collection: a page of the list holds only some of the neighbours.
+    def role_positions
+      return @role_positions if defined?(@role_positions)
+
+      @role_positions = Pundit::Matrix::Role.ordinary_positions
     end
 
     def holders_shown?
@@ -60,11 +67,11 @@ ActiveAdmin.register Pundit::Matrix::Role do
     column :position do |role|
       span role.position
       if role_order_shown?
-        if role.movable_up? && authorized?(:move_up, role)
+        if role.movable_up?(role_positions) && authorized?(:move_up, role)
           up = active_admin_config.route_member_action_path(:move_up, role)
           a '↑', href: up, 'data-method': :put, title: Pundit::Matrix.t('move_up')
         end
-        if role.movable_down? && authorized?(:move_down, role)
+        if role.movable_down?(role_positions) && authorized?(:move_down, role)
           down = active_admin_config.route_member_action_path(:move_down, role)
           a '↓', href: down, 'data-method': :put, title: Pundit::Matrix.t('move_down')
         end

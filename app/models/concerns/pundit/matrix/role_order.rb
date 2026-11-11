@@ -12,11 +12,17 @@ module Pundit
         after_destroy :close_gap
 
         scope :ordered, -> { order(:position) }
+        scope :ordinary, -> { where.not(position: Role::ADMIN_POSITION) }
       end
 
       class_methods do
         def next_position
           [maximum(:position).to_i, Role::ADMIN_POSITION].max + 1
+        end
+
+        def ordinary_positions
+          highest, lowest = ordinary.pick(arel_table[:position].minimum, arel_table[:position].maximum)
+          highest..lowest if highest
         end
       end
 
@@ -24,12 +30,12 @@ module Pundit
         position < other.position
       end
 
-      def movable_up?
-        !admin? && self.class.where(position: (Role::ADMIN_POSITION + 1)...position).exists?
+      def movable_up?(positions = self.class.ordinary_positions)
+        !admin? && !positions.nil? && positions.begin < position
       end
 
-      def movable_down?
-        !admin? && self.class.where(position: (position + 1)..).exists?
+      def movable_down?(positions = self.class.ordinary_positions)
+        !admin? && !positions.nil? && position < positions.end
       end
 
       def move_up
@@ -72,7 +78,7 @@ module Pundit
       end
 
       def ordinary_roles
-        self.class.where.not(position: Role::ADMIN_POSITION).ordered.lock.to_a
+        self.class.ordinary.ordered.lock.to_a
       end
 
       # Past every position first, so the unique index never sees two roles on one position.

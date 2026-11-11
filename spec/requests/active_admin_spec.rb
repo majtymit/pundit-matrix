@@ -425,6 +425,24 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
       expect(page.css('td.col-position a').map { |link| link['data-method'] }).to all(eq('put'))
     end
 
+    def index_queries
+      queries = []
+      subscriber = ActiveSupport::Notifications.subscribe('sql.active_record') { |*, payload| queries << payload[:sql] }
+      as(admin, :get, '/admin/roles')
+      queries.size
+    ensure
+      ActiveSupport::Notifications.unsubscribe(subscriber)
+    end
+
+    it 'asks no more queries for the arrows of more roles' do
+      index_queries
+      two_roles = index_queries
+      %w[Analyst Auditor Clerk].each { |name| Pundit::Matrix::Role.create!(name:) }
+
+      expect(index_queries).to eq(two_roles)
+      expect(arrows.size).to eq(8)
+    end
+
     it 'shows no arrows in a filtered or reordered list' do
       as(admin, :get, '/admin/roles', params: { q: { name_cont: 'a' } })
       expect(arrows).to be_empty
