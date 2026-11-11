@@ -166,7 +166,7 @@ Pundit::Matrix.configure do |config|
 end
 ```
 
-Then only a superadmin lists, shows, creates, edits, deletes and moves roles, the role policy's scope is empty for anyone else, and the roles screen opens to superadmins only, with the holders of each role. Admins keep every screen and keep managing subjects. `access.manage_roles?` gives the same answer outside the policy.
+Then only a superadmin lists, shows, creates, edits, deletes and moves roles, the role policy's scope is empty for anyone else, and the roles screen opens to superadmins only, with the holders of each role. Admins keep every screen and keep managing subjects. `access.manage_roles?` gives the same answer outside the policy. While nobody is an active superadmin yet, nobody opens the roles screen either, so nobody sees its [warning](#customizing-the-look); render `pundit/matrix/superadmin_warning` where admins look, such as the dashboard, if you want it seen.
 
 ### The admin role
 
