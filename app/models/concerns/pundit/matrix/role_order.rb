@@ -81,11 +81,15 @@ module Pundit
         self.class.ordinary.ordered.lock.to_a
       end
 
-      # Past every position first, so the unique index never sees two roles on one position.
+      # The moved roles step past every position first, so the unique index never sees two roles on one position.
+      # That step goes around the callbacks, so an audit sees one change per moved role and none for the rest.
       def renumber(roles)
-        offset = roles.map(&:position).max.to_i
-        roles.each { |role| role.renumber_to(role.position + offset) }
-        roles.each.with_index(Role::ADMIN_POSITION + 1) { |role, position| role.renumber_to(position) }
+        moved = roles.each.with_index(Role::ADMIN_POSITION + 1).reject { |role, position| role.position == position }
+        return if moved.empty?
+
+        offset = roles.map(&:position).max
+        self.class.where(id: moved.map { |role, _| role.id }).update_all(['position = position + ?', offset])
+        moved.each { |role, position| role.renumber_to(position) }
       end
 
       protected

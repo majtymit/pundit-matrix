@@ -5,8 +5,9 @@ module Pundit
 
       include RoleOrder
 
-      has_many :permissions, dependent: :delete_all, autosave: true
       has_many :role_assignments, dependent: :restrict_with_error
+      # dependent: :destroy, so an audit of the permissions keeps the levels of a deleted role.
+      has_many :permissions, dependent: :destroy, autosave: true
 
       validates :name, presence: true, uniqueness: true
       validates :position, numericality: { only_integer: true, greater_than: 0 }, uniqueness: true

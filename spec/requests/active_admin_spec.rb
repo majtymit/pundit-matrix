@@ -35,6 +35,14 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
       expect(menu.map { |link| link['href'] }).to eq(%w[/admin/roles /admin/users])
     end
 
+    it 'leaves the roles sidebar off a subject that shows its roles itself' do
+      members = namespace.register(User, as: 'Member') { matrix_subject(roles_sidebar: false) }
+
+      expect(members.sidebar_sections.map(&:name)).not_to include('roles')
+    ensure
+      reload
+    end
+
     it 'comes again before the app file on a reload' do
       reload
 

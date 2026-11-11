@@ -2,9 +2,11 @@ module Pundit
   module Matrix
     module ActiveAdmin
       module ResourceDSL
-        def matrix_subject
+        def matrix_subject(roles_sidebar: true)
           config.singleton_class.prepend(SubjectFilters)
           controller { prepend SubjectParams }
+          return unless roles_sidebar
+
           sidebar :roles, only: :show do
             ul do
               resource.roles.sort_by(&:position).each { |role| li role.name }

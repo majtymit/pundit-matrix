@@ -148,6 +148,19 @@ RSpec.describe Pundit::Matrix::Role do
       expect(order).to eq([['Admin', 1], ['Analyst', 2], ['Operator', 3], ['Manager', 4]])
     end
 
+    it 'saves only the roles that move, each once' do
+      operator, manager, analyst = create_roles('Operator', 'Manager', 'Analyst')
+      untouched = operator.updated_at
+
+      queries = []
+      counter = ->(*, payload) { queries << payload[:sql] if payload[:sql].start_with?('UPDATE') }
+      ActiveSupport::Notifications.subscribed(counter, 'sql.active_record') { analyst.move_up }
+
+      expect(queries.size).to eq(3)
+      expect(operator.reload.updated_at).to eq(untouched)
+      expect([manager.reload.position, analyst.position]).to eq([4, 3])
+    end
+
     it 'closes the gap a deleted role leaves' do
       _, manager = create_roles('Operator', 'Manager', 'Analyst')
 
@@ -188,12 +201,14 @@ RSpec.describe Pundit::Matrix::Role do
   describe 'with screens' do
     include_context 'with fresh configuration'
 
-    it 'deletes its permissions with it' do
+    it 'destroys its permissions with it, through their callbacks' do
       Pundit::Matrix.screens.draw { screen :orders }
       role, = create_roles('Operator')
       role.permissions.create!(screen: 'orders', level: 'read')
+      DestroyedPermissions.screens.clear
 
       expect { role.destroy }.to change(Pundit::Matrix::Permission, :count).by(-1)
+      expect(DestroyedPermissions.screens).to eq(['orders'])
     end
 
     it 'uses the configured table prefix' do

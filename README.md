@@ -314,9 +314,9 @@ end
 ```
 
 The hooks are `:pundit_matrix_role`, `:pundit_matrix_permission` and `:pundit_matrix_role_assignment`. Changing roles
-through `role_ids=` destroys the assignments it drops, so their callbacks run. Moving a role up or down saves every
-ordinary role twice, to a temporary and then to its final position, so an audit records two position changes per role
-and move.
+through `role_ids=` destroys the assignments it drops, and deleting a role destroys its permissions, so their
+callbacks run. Moving or deleting a role saves each role whose position changes once, from its old position to its new
+one, and leaves the other roles alone.
 
 Ransack can search roles by their own columns and assignments by role, while no one acts or the actor is an admin
 or a superadmin. To filter subjects by role, add `roles` and `role_assignments` to the subject's
@@ -387,7 +387,7 @@ The generator copies the gem's screen into `app/admin/roles.rb` and sets `config
 
 ### Subjects
 
-`matrix_subject` adds the attributes the subject policy permits (`role_ids`, and `superadmin` for a superadmin) to whatever `permit_params` permits, and shows the roles in a sidebar on the detail. It also puts the role filter on the index for admins and superadmins only: it adds `filter :roles` when you have not declared it, and when you have (or ActiveAdmin adds it by default), it sets its `if:` to `access.everything?`, replacing any `if:` of your own. ActiveAdmin cannot render a filter that Ransack refuses, so without that the index would fail for everyone else ([Managing subjects](#managing-subjects)). The rest of your filters stay as they are.
+`matrix_subject` adds the attributes the subject policy permits (`role_ids`, and `superadmin` for a superadmin) to whatever `permit_params` permits, and shows the roles in a sidebar on the detail, unless you pass `roles_sidebar: false` because your detail lists them itself. It also puts the role filter on the index for admins and superadmins only: it adds `filter :roles` when you have not declared it, and when you have (or ActiveAdmin adds it by default), it sets its `if:` to `access.everything?`, replacing any `if:` of your own. ActiveAdmin cannot render a filter that Ransack refuses, so without that the index would fail for everyone else ([Managing subjects](#managing-subjects)). The rest of your filters stay as they are.
 
 In the form, `f.matrix_subject_inputs` inside `f.inputs` adds the roles as formtastic check boxes, stacked in position order and aligned with your other inputs, with the roles the actor cannot assign disabled and a hidden empty value so every role can be unchecked, and below them the superadmin flag for a superadmin. Apps without ActiveAdmin render `pundit/matrix/subject_fields` instead.
 
