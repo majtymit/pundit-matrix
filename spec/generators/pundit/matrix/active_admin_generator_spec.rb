@@ -62,6 +62,16 @@ RSpec.describe Pundit::Matrix::ActiveAdminGenerator do
       expect(output).not_to include('on_unauthorized_access', 'Add `matrix_subject`', 'in the Dashboard page')
     end
 
+    it 'leaves a matrix subject the resource declares already' do
+      content = "ActiveAdmin.register User do\n  matrix_subject roles_sidebar: false\n\n  permit_params :email\nend\n"
+      write('app/admin/users.rb', content)
+
+      output = run_generator
+
+      expect(read('app/admin/users.rb')).to eq(content)
+      expect(output).not_to include('Add `matrix_subject`')
+    end
+
     it 'keeps a refusal handler the app has' do
       write('config/initializers/active_admin.rb',
             "ActiveAdmin.setup do |config|\n  config.on_unauthorized_access = :access_denied\nend\n")
@@ -106,6 +116,16 @@ RSpec.describe Pundit::Matrix::ActiveAdminGenerator do
 
     expect(read('app/policies/admin/user_policy.rb'))
       .to eq("module Admin\n  class UserPolicy < DefaultPolicy\n    subject_screen :users\n\n  end\nend\n")
+  end
+
+  it 'leaves an admin subject screen as it is' do
+    content = "module Admin\n  class UserPolicy < DefaultPolicy\n    admin_subject_screen\n  end\nend\n"
+    write('app/policies/admin/user_policy.rb', content)
+
+    output = run_generator
+
+    expect(read('app/policies/admin/user_policy.rb')).to eq(content)
+    expect(output).not_to include('Admin::UserPolicy with')
   end
 
   describe 'a page policy the app has already' do

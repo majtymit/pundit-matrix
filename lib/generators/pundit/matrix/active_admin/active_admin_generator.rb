@@ -54,6 +54,8 @@ module Pundit
 
       def add_matrix_subject
         file = "app/admin/#{subject_name.underscore.pluralize}.rb"
+        return if exist?(file) && read(file).match?(/^\s*matrix_subject\b/)
+
         added = inject_after(file, /ActiveAdmin\.register #{subject_name} do\n/, "  matrix_subject\n\n")
         steps << "Add `matrix_subject` to `ActiveAdmin.register #{subject_name}`." unless added
       end

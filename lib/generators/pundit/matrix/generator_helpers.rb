@@ -29,7 +29,7 @@ module Pundit
         return false unless exist?(path)
 
         content = read(path)
-        return true if content.match?(/^\s*subject_screen\b/)
+        return true if content.match?(/^\s*(?:admin_)?subject_screen\b/)
         return replace_screen(path) if content.match?(/^\s*screen :\w+/)
 
         policy = content.match(/^(\s*)class (?:\w+::)*#{subject_name.demodulize}Policy\b.*\n/)
