@@ -65,7 +65,6 @@ module Pundit
           )
         end
 
-        # Each action that needs write and that the policy does not switch off, with the screen it counts for.
         def write_actions(subject)
           return [] if screen.nil? && moved_actions.empty?
 

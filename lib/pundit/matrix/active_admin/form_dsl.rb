@@ -22,8 +22,6 @@ module Pundit
 
         private
 
-        # Held but not assignable roles stay checked and disabled, so the form does not send them and the subject
-        # keeps them.
         def unassignable_role_ids(actor, roles)
           return [] unless actor
 

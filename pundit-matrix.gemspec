@@ -18,11 +18,9 @@ Gem::Specification.new do |spec|
   spec.metadata['rubygems_mfa_required'] = 'true'
 
   gemspec = File.basename(__FILE__)
+  development = %w[bin/ gemfiles/ spec/ . Gemfile Rakefile CODE_OF_CONDUCT.md]
   spec.files = IO.popen(%w[git ls-files -z], chdir: __dir__, err: IO::NULL) do |ls|
-    ls.readlines("\x0", chomp: true).reject do |f|
-      (f == gemspec) ||
-        f.start_with?(*%w[bin/ gemfiles/ Gemfile .gitignore .rspec spec/ .github/ .rubocop.yml])
-    end
+    ls.readlines("\x0", chomp: true).reject { |f| f == gemspec || f.start_with?(*development) }
   end
   spec.require_paths = ['lib']
 
