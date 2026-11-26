@@ -45,7 +45,7 @@ RSpec.describe Pundit::Matrix::Subject do
 
     it 'keeps the superadmin flag' do
       expect(superadmin.update(superadmin: false)).to be(false)
-      expect(superadmin.errors[:base]).to eq(['At least one active superadmin must remain'])
+      expect(superadmin.errors[:superadmin]).to eq(['At least one active superadmin must remain'])
       expect(superadmin.reload).to be_superadmin
     end
 

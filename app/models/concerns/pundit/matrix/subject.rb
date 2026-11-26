@@ -87,10 +87,11 @@ module Pundit
 
       def keep_an_active_superadmin
         was_active_superadmin = persisted? && active_superadmins.exists?(id)
+        attribute = will_save_change_to_attribute?(:superadmin) ? :superadmin : :base
         yield
         return unless was_active_superadmin && !active_superadmins.exists?(id) && !other_active_superadmins.exists?
 
-        errors.add(:base, :last_superadmin, message: Pundit::Matrix.t('errors.last_superadmin'))
+        errors.add(attribute, :last_superadmin, message: Pundit::Matrix.t('errors.last_superadmin'))
         raise ActiveRecord::RecordInvalid, self
       end
 

@@ -147,6 +147,13 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
       expect(flash[:error]).to eq(I18n.t('active_admin.access_denied.message'))
     end
 
+    it 'sends someone refused by the page they came from to the dashboard' do
+      referer = 'http://www.example.com/admin/users'
+      as(subject_with(widgets: :read), :get, '/admin/users', headers: { 'Referer' => referer })
+
+      expect(response).to redirect_to('/admin')
+    end
+
     it 'answers other formats the way ActiveAdmin does' do
       as(subject_with, :get, '/admin/users.json')
 
@@ -201,6 +208,24 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
       as(superadmin, :patch, "/admin/users/#{luke.id}", params: { user: { superadmin: '1', role_ids: } })
 
       expect(luke.reload).to be_superadmin
+    end
+
+    it 'goes to the list when a superadmin drops their own flag and the detail refuses them' do
+      make_superadmin(User.create!(email: 'other@example.com'))
+
+      as(superadmin, :patch, "/admin/users/#{superadmin.id}", params: { user: { superadmin: '0' } })
+
+      expect(superadmin.reload).not_to be_superadmin
+      expect(response).to redirect_to('/admin/users')
+    end
+
+    it 'goes to the dashboard when a superadmin drops their own flag and roles and the list refuses them too' do
+      make_superadmin(User.create!(email: 'other@example.com'))
+
+      as(superadmin, :patch, "/admin/users/#{superadmin.id}", params: { user: { superadmin: '0', role_ids: [''] } })
+
+      expect(superadmin.reload.roles).to be_empty
+      expect(response).to redirect_to('/admin')
     end
 
     describe 'the role inputs of the form' do

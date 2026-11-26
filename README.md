@@ -10,7 +10,7 @@ You create as many roles as you need; the gem keeps them in order. Access comes 
 - **The admin role** – one role, part of the gem, always first. Has every screen, including later ones, and manages roles (unless the app leaves them to superadmins) and every subject below admin.
 - **Ordinary roles** – every other role. Has what the matrix says and manages only subjects with a lower role.
 
-Requires Ruby 3.2+, Rails 7.2+ and Pundit 2.3+.
+Requires Ruby 3.2+, Rails 7.2+ and Pundit 2.3+. The ActiveAdmin adapter works with ActiveAdmin 3.x.
 
 ## Installation
 
@@ -214,6 +214,12 @@ A theme with other input widths sets the matrix to match. arctic_admin, for one,
 .pundit-matrix-levels .pundit-matrix { width: 50%; }
 ```
 
+The header of the form's matrix stays on screen while the matrix scrolls. An admin with a fixed top bar sets how far below the top it stops, and the background when the page is not the system's:
+
+```scss
+.pundit-matrix { --pundit-matrix-header-offset: 60px; --pundit-matrix-header-background: #fff; }
+```
+
 On the detail, the column of screen names is ActiveAdmin's `.attributes_table th`; widen it in your stylesheet and the details and the matrix follow together.
 
 The form sends `role[levels][orders]=read`, so `@role.update(permitted_attributes(@role))` saves it. For another parameter name, pass `scope: 'pundit_matrix_role'` to the partial.
@@ -410,7 +416,7 @@ ActiveAdmin.setup do |config|
 end
 ```
 
-`pundit_matrix_access_denied` sends someone with at least one screen back where they came from and someone with no screen to the dashboard, both with ActiveAdmin's message. The dashboard must stay open (`open_screen`), otherwise someone with no screen is refused there again. To decide it yourself, point the setting to a public method of your own; nothing in the gem changes:
+`pundit_matrix_access_denied` sends someone with at least one screen back where they came from and someone with no screen to the dashboard, both with ActiveAdmin's message. Someone who came from the very page that refused them goes to the dashboard too, so the page does not send them to itself forever. After a save that takes away the actor's own access to the record, such as a superadmin dropping their own flag, the adapter goes to the list instead of the detail, or to the dashboard when the list is refused as well. The dashboard must stay open (`open_screen`), otherwise someone with no screen is refused there again. To decide it yourself, point the setting to a public method of your own; nothing in the gem changes:
 
 ```ruby
 class ApplicationController < ActionController::Base

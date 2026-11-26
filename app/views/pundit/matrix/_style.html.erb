@@ -4,7 +4,11 @@
   .pundit-matrix th, .pundit-matrix td { padding: 0.5em 0.75em; }
   <%# Only the form: on the detail the admin's attributes table draws its own rows. %>
   .pundit-matrix-levels .pundit-matrix td { border-bottom: 1px solid rgba(127, 127, 127, 0.25); }
-  .pundit-matrix thead th { background: none; }
+  <%# Sticky, so the level columns stay named down a long matrix; an admin with a fixed header sets the offset. %>
+  .pundit-matrix thead th {
+    position: sticky; top: var(--pundit-matrix-header-offset, 0); z-index: 1;
+    background: var(--pundit-matrix-header-background, Canvas);
+  }
   .pundit-matrix th[scope="rowgroup"] {
     padding-top: 1.75em; text-align: left; font-weight: bold; font-size: 1.15em; text-transform: none;
   }

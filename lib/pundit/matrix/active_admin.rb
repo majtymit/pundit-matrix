@@ -24,6 +24,7 @@ end
 ActiveAdmin.after_load do
   ActiveAdmin::BaseController.include(Pundit::Matrix::ActiveAdmin::Controller)
   ActiveAdmin::ResourceController.prepend(Pundit::Matrix::ActiveAdmin::ScopedFind)
+  ActiveAdmin::ResourceController.prepend(Pundit::Matrix::ActiveAdmin::ReachableRedirect)
 end
 
 # Before the app's files on every load, reloads included, so an app file reopening the roles screen always comes after.
