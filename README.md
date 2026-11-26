@@ -196,7 +196,7 @@ filter :roles, as: :select, collection: -> { Pundit::Matrix::Role.ordered.pluck(
 
 ### Who acts
 
-The rules hold on every save of `role_ids=`, `roles=` and `update(role_ids:)`. The actor is `pundit_user` in controllers with `Pundit::Authorization`; elsewhere set it:
+The rules hold on every save of `role_ids=`, `roles=` and `update(role_ids:)`. The actor is `current_active_admin_user` in ActiveAdmin and `pundit_user` in other controllers with `Pundit::Authorization`; elsewhere set it:
 
 ```ruby
 Pundit::Matrix::Current.set(actor: user) do
@@ -204,7 +204,7 @@ Pundit::Matrix::Current.set(actor: user) do
 end
 ```
 
-Roles the actor cannot assign are kept when the submitted ids leave them out. With no actor (console, seeds, jobs) nothing is restricted.
+Roles the actor cannot assign are kept when the submitted ids leave them out. With no actor (console, seeds, jobs) nothing is restricted; in a request with nobody signed in, no role can change.
 
 ## Extending the models
 

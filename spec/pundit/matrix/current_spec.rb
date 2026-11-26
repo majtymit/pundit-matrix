@@ -24,6 +24,15 @@ RSpec.describe Pundit::Matrix::Current do
     end
   end
 
+  it 'stands in nobody, who may change no roles, when the source finds nobody' do
+    described_class.set(actor_source: -> { }) do
+      access = described_class.actor.access
+
+      expect([access.superadmin?, access.everything?, access.manage?(user)]).to eq([false, false, false])
+      expect(access.assignable_roles).to be_empty
+    end
+  end
+
   it 'prefers an actor given for a block and restores the outer one after it' do
     other = User.create!(email: 'b@example.com')
 

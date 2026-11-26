@@ -4,7 +4,8 @@ RSpec.describe Pundit::Matrix::Controller, type: :controller do
       include Pundit::Authorization
 
       def index
-        render plain: Pundit::Matrix::Current.actor&.email.to_s
+        actor = Pundit::Matrix::Current.actor
+        render plain: actor.try(:email) || actor.class.name
       end
 
       private
@@ -21,6 +22,12 @@ RSpec.describe Pundit::Matrix::Controller, type: :controller do
       get :index
 
       expect(response.body).to eq('a@example.com')
+    end
+
+    it 'stands in nobody for a request with nobody signed in' do
+      get :index
+
+      expect(response.body).to eq('Pundit::Matrix::Current::Nobody')
     end
 
     it 'forgets the actor after the request' do

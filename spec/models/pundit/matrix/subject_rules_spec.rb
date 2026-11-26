@@ -33,6 +33,17 @@ RSpec.describe Pundit::Matrix::Subject do
     expect(role_names(operator)).to eq(['Manager'])
   end
 
+  it 'lets nobody change roles or the flag in a request with nobody signed in' do
+    user = operator
+
+    Pundit::Matrix::Current.set(actor_source: -> { }) do
+      expect(user.update(role_ids: [admin_role.id], superadmin: true)).to be(false)
+    end
+
+    expect(role_names(operator)).to eq(['Operator'])
+    expect(operator.reload).not_to be_superadmin
+  end
+
   it 'lets a superadmin assign any role' do
     as(superadmin) { expect(operator.update(role_ids: [admin_role.id, analyst_role.id])).to be(true) }
 

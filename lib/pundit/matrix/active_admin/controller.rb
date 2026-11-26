@@ -14,6 +14,17 @@ module Pundit
             format.any { rescue_active_admin_access_denied(exception) }
           end
         end
+
+        private
+
+        # The admin knows its user without Pundit::Authorization, and it may be another model than pundit_user.
+        def pundit_matrix_actor?
+          true
+        end
+
+        def pundit_matrix_actor
+          current_active_admin_user
+        end
       end
 
       module ScopedFind
