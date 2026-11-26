@@ -30,6 +30,12 @@ RSpec.describe 'pundit/matrix/_subject_fields' do
     expect(role_boxes(html).select { |box| box['checked'] }.map { |box| box['value'] }).to eq([operator_role.id.to_s])
   end
 
+  it 'checks the roles of a subject not saved yet, as a refused create shows them again' do
+    html = render_fields(superadmin, subject: User.new(roles: [manager_role]))
+
+    expect(role_boxes(html).select { |box| box['checked'] }.map { |box| box['value'] }).to eq([manager_role.id.to_s])
+  end
+
   it 'disables the roles the actor cannot assign' do
     subject_user.roles << admin_role
 

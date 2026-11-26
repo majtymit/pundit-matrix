@@ -34,6 +34,16 @@ RSpec.describe Pundit::Matrix::Subject do
     expect(DestroyedAssignments.role_ids).to eq([role.id])
   end
 
+  it 'saves anyone but a superadmin without looking for superadmins' do
+    user = create_user('a@example.com')
+    statements = []
+    collect = ->(*, payload) { statements << payload[:sql] unless payload[:name] == 'TRANSACTION' }
+
+    ActiveSupport::Notifications.subscribed(collect, 'sql.active_record') { user.update!(email: 'b@example.com') }
+
+    expect(statements).to all(start_with('UPDATE'))
+  end
+
   it 'allows subjects while no superadmin exists' do
     user = create_user('a@example.com')
 

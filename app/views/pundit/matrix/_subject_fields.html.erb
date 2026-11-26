@@ -3,9 +3,10 @@
 <fieldset class="pundit-matrix-roles">
   <legend><%= subject.class.human_attribute_name(:roles) %></legend>
   <%= hidden_field_tag "#{scope}[role_ids][]", '', id: nil %>
+  <% held = subject.role_ids %>
   <% Pundit::Matrix::Role.ordered.each do |role| %>
     <label>
-      <%= check_box_tag "#{scope}[role_ids][]", role.id, subject.roles.include?(role),
+      <%= check_box_tag "#{scope}[role_ids][]", role.id, held.include?(role.id),
                         id: nil, disabled: actor.present? && !actor.access.assign?(role) %>
       <%= role.name %>
     </label>

@@ -86,7 +86,7 @@ module Pundit
       end
 
       def keep_an_active_superadmin
-        was_active_superadmin = persisted? && active_superadmins.exists?(id)
+        was_active_superadmin = stored_superadmin? && active_superadmins.exists?(id)
         attribute = will_save_change_to_attribute?(:superadmin) ? :superadmin : :base
         yield
         return unless was_active_superadmin && !active_superadmins.exists?(id) && !other_active_superadmins.exists?
@@ -96,10 +96,15 @@ module Pundit
       end
 
       def keep_an_active_superadmin_on_destroy
-        return unless active_superadmins.exists?(id) && !other_active_superadmins.exists?
+        return unless stored_superadmin? && active_superadmins.exists?(id) && !other_active_superadmins.exists?
 
         errors.add(:base, :last_superadmin, message: Pundit::Matrix.t('errors.last_superadmin'))
         throw :abort
+      end
+
+      # Only a stored superadmin can be an active one, and most saves are of others, so they skip the queries.
+      def stored_superadmin?
+        persisted? && attribute_in_database(:superadmin)
       end
 
       def active_superadmins
