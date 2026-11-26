@@ -24,11 +24,14 @@ RSpec.describe Pundit::Matrix::Subject do
     expect(DestroyedAssignments.role_ids).to eq([dropped.id])
   end
 
-  it 'removes role assignments together with the subject' do
+  it 'destroys the role assignments together with the subject, so the host can audit them' do
+    role = Pundit::Matrix::Role.create!(name: 'Operator')
     user = create_user('a@example.com')
-    user.roles << Pundit::Matrix::Role.create!(name: 'Operator')
+    user.roles << role
+    DestroyedAssignments.role_ids.clear
 
     expect { user.destroy }.to change(Pundit::Matrix::RoleAssignment, :count).by(-1)
+    expect(DestroyedAssignments.role_ids).to eq([role.id])
   end
 
   it 'allows subjects while no superadmin exists' do
