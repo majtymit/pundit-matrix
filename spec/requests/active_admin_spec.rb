@@ -185,6 +185,21 @@ RSpec.describe 'ActiveAdmin adapter', type: :request do
       expect(response.body).to include(reader.email, 'luke@example.com')
     end
 
+    it 'loads the roles of the listed subjects at once' do
+      writer = subject_with(users: :write)
+      queries = lambda do
+        count = 0
+        counter = ->(*, payload) { count += 1 unless payload[:name] == 'SCHEMA' }
+        ActiveSupport::Notifications.subscribed(counter, 'sql.active_record') { as(writer, :get, '/admin/users') }
+        count
+      end
+
+      few = queries.call
+      3.times { |index| User.create!(email: "more#{index}@example.com", roles: [operator_role]) }
+
+      expect(queries.call).to eq(few)
+    end
+
     it 'shows the roles on the detail' do
       as(admin, :get, "/admin/users/#{luke.id}")
 

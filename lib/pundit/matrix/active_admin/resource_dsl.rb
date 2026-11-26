@@ -4,7 +4,7 @@ module Pundit
       module ResourceDSL
         def matrix_subject(roles_sidebar: true)
           config.singleton_class.prepend(SubjectFilters)
-          controller { prepend SubjectParams }
+          controller { prepend SubjectController }
           return unless roles_sidebar
 
           sidebar :roles, only: :show do
@@ -34,8 +34,13 @@ module Pundit
         end
       end
 
-      module SubjectParams
+      module SubjectController
         private
+
+        # The actions of each row ask whether the actor manages that subject, which takes its roles.
+        def scoped_collection
+          super.preload(:roles)
+        end
 
         def permitted_params
           permitted = super
